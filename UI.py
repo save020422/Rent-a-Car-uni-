@@ -1,5 +1,11 @@
+
+
+#en este modulo se contrulle la interface del programa mediante funciones constructoras
+
 import flet as ft
 import Abtsration as ab
+
+
 
 def torist_seccion(infomanager):
     tourist = ab.Tourist()
