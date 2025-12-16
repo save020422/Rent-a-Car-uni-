@@ -1,4 +1,6 @@
 import flet as ft
+from appstate import appState as _app
+
 
 class Tourist:
     def __init__(self, name ="", passport_number = "",country = ""):
@@ -66,7 +68,7 @@ class ShowDataTable(ft.DataTable):
         super().__init__(
             columns=columns,
             border=ft.border.all(1, ft.Colors.GREY),
-            border_radius=12,
+            border_radius=_app.app_state.border,
             vertical_lines= ft.border.BorderSide(1, ft.Colors.GREY),
             #data_row_color={"even": ft.Colors.BLUE_50, "odd": ft.Colors.WHITE},
             divider_thickness=1,

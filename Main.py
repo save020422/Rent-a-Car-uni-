@@ -1,13 +1,7 @@
 import flet as ft
-<<<<<<< Updated upstream
 from ui import *
 from Abtsration import InfoManager, Tourist
 import SystemOfBd as bd
-=======
-from UI import *
-from Abtsration import InfoManager, Tourist ,SystemBd
-
->>>>>>> Stashed changes
 #page_init = [False] 
 
 def main(page: ft.Page):

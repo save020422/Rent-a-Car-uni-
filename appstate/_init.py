@@ -1,10 +1,9 @@
 
-
 class  AppState:
 
     def __init__(self):
         #atributos basicos 
-        self.raduius = int()
+        self.border = int(15)
         self.escala = int()
 
 
