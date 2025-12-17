@@ -1,23 +1,21 @@
 import flet as ft
 from ui import *
-from Abtsration import InfoManager, Tourist
-import SystemOfBd as bd
-#page_init = [False] 
+from Abtsration import InfoManager, Tourist ,Formulary
+from  system_of_the_db import const 
+
 
 def main(page: ft.Page):
     page.title = "Sistema de Alquiler de Autos"
-    page.bgcolor = ft.Colors.BLUE_GREY_900
+    page.bgcolor = ft.Colors.WHITE
 
     user_data = InfoManager()
-    bd.init()
-    bd.TouristBD.insertar_turistas_demo()
-    bd.TouristBD.cargar_turistas(user_data.turistas)
+    #const.init()
+    #bd.TouristBD.insertar_turistas_demo()
+    #bd.TouristBD.cargar_turistas(user_data.turistas)
+
+    formulari = Formulary()
 
     
-
-    #
-
-    # Crear la pestaña de usuarios
     users_tab = torist_seccion(infomanager=user_data )
 
     # Obtener la tabla desde el contenido de la pestaña
@@ -29,7 +27,7 @@ def main(page: ft.Page):
         tabs=[users_tab],
         expand=1
     )
-    page.add(tabs)
+    page.add(ft.Row( controls= [formulari]))
     page.update()
 
     #page_init[0] = True

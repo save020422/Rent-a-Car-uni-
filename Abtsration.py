@@ -121,3 +121,121 @@ class ShowDataTable(ft.DataTable):
 
 
         
+
+import flet as ft
+
+class Formulary(ft.Container):
+    def __init__(self):
+        # Controles del formulario (inicialmente ocultos)
+        self.name_field = ft.TextField(label="Nombre", dense=True, content_padding=5)
+        self.passport_field = ft.TextField(label="Pasaporte", dense=True, content_padding=5)
+        self.driver_switch = ft.Switch(label="Con conductor", value=False)
+        self.select_country_button = ft.TextButton("Seleccionar país")
+        self.select_car_button = ft.TextButton("Seleccionar auto")
+
+        # Columna con el contenido del formulario
+        self.form_column = ft.Column(
+            controls=[
+                self.name_field,
+                self.passport_field,
+                self.driver_switch,
+                ft.Row(
+                    controls=[self.select_country_button, self.select_car_button],
+                    spacing=8
+                )
+            ],
+            spacing=10,
+            visible=False  # Inicia oculto
+        )
+
+        # Botón horizontal (en la parte superior)
+        self.toggle_button = ft.TextButton(
+            "▼ Reservar",
+            on_click=self._toggle_form
+        )
+
+        # Contenido principal del Container: botón + formulario (oculto al inicio)
+        main_content = ft.Column(
+            controls=[
+                self.toggle_button,
+                self.form_column
+            ],
+            spacing=0
+        )
+
+        # Inicializar el Container
+        super().__init__(
+            content=main_content,
+            padding=0,
+            border=None,  # Sin borde al inicio (solo aparece cuando está desplegado)
+            border_radius=8,
+            expand=False
+        )
+
+    def _toggle_form(self, e):
+        # Alternar visibilidad
+        self.form_column.visible = not self.form_column.visible
+
+        # Actualizar texto del botón
+        if self.form_column.visible:
+            self.toggle_button.text = "▲ Ocultar"
+            self.border = ft.border.all(1, ft.Colors.GREY_400)
+            self.padding = 12
+        else:
+            self.toggle_button.text = "▼ Reservar"
+            self.border = None
+            self.padding = 0
+
+        self.update()
+
+
+
+
+class CountryPanel(ft.Container):
+    def __init__(self):
+        # Lista de países de ejemplo (puedes ampliarla)
+        self.countries = [
+            "Argentina", "Brasil", "Chile", "Colombia", "México",
+            "Perú", "España", "Francia", "Italia", "Alemania",
+            "Japón", "Corea del Sur", "Estados Unidos", "Canadá", "Australia"
+        ]
+
+        # Crear botones (o tarjetas) clickeables para cada país
+        country_cards = []
+        for country in self.countries:
+            card = ft.Container(
+                content=ft.Text(country, size=14, weight="bold", color=ft.Colors.WHITE),
+                padding=12,
+                margin=4,
+                bgcolor=ft.Colors.BLUE_600,
+                border_radius=8,
+                alignment=ft.alignment.center,
+                on_click=self._on_country_click,
+                data=country  # Guardamos el nombre del país aquí
+            )
+            country_cards.append(card)
+
+        # GridView para mostrar en cuadrícula
+        grid = ft.GridView(
+            controls=country_cards,
+            max_extent=120,  # Ancho máximo por ítem
+            spacing=10,
+            run_spacing=10,
+            padding=10,
+            expand=False
+        )
+
+        # Inicializar el Container
+        super().__init__(
+            content=grid,
+            padding=0,
+            expand=False,
+            bgcolor=ft.Colors.GREY_100,
+            border_radius=8
+        )
+
+    def _on_country_click(self, e):
+        # Imprimir el nombre del país en la consola
+        country_name = e.control.data
+        print(f"País seleccionado: {country_name}")
+        # Puedes agregar aquí: guardar en variable, mostrar snackbar, etc.
