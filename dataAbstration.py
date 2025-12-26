@@ -1,4 +1,4 @@
-import uuid
+
 
 
 class InfoManager :
@@ -34,3 +34,19 @@ class Tourist:
         self.name = name
         self.country = country
         self.passport_number = passport_number
+
+    
+class Car:
+    def __init__(self, plate: str, brand: str, model: str, color: str):
+        self.plate = plate              # identificador único (como el pasaporte)
+        self.brand = brand
+        self.model = model
+        self.color = color
+        self.total_km = 0               # kilómetros recorridos (acumulado)
+        self.status = "disponible"      # valores posibles: "disponible", "alquilado", "taller"
+
+
+class Contrat:
+    pass 
+        
+    
