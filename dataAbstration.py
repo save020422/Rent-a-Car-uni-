@@ -1,7 +1,27 @@
-
-
-
+import flet as ft
 from datetime import date
+class Car:
+    def __init__(self, plate: str, brand: str, model: str, color: str, status: str = "disponible"):
+        self.plate = plate
+        self.brand = brand
+        self.model = model
+        self.color = color
+        self.total_km = 0
+        self.status = status
+    
+    def __str__(self):
+        return f"{self.brand} {self.model}"
+    
+    def get_status_color(self):
+        if self.status == "disponible":
+            return ft.Colors.GREEN_700
+        elif self.status == "alquilado":
+            return ft.Colors.GREY_500
+        elif self.status == "taller":
+            return ft.Colors.RED_700
+        else:
+            return ft.Colors.BLUE_700
+
 
 class InfoManager:
     def __init__(self, countries_list=None):
@@ -129,51 +149,60 @@ class Tourist:
 
     
 class Car:
-    def __init__(self, plate: str, brand: str, model: str, color: str):
-        self.plate = plate              # identificador único (como el pasaporte)
+    def __init__(self, plate: str, brand: str, model: str, color: str, status: str = "disponible"):
+        self.plate = plate
         self.brand = brand
         self.model = model
         self.color = color
-        self.total_km = 0               # kilómetros recorridos (acumulado)
-        self.status = "disponible"      # valores posibles: "disponible", "alquilado", "taller"
+        self.total_km = 0
+        self.status = status
+    
+    def __str__(self):
+        return f"{self.brand} {self.model}"
+    
+    def get_status_color(self):
+        if self.status == "disponible":
+            return ft.Colors.GREEN_700
+        elif self.status == "alquilado":
+            return ft.Colors.GREY_500
+        elif self.status == "taller":
+            return ft.Colors.RED_700
+        else:
+            return ft.Colors.BLUE_700
+    # valores posibles: "disponible", "alquilado", "taller"
 
 
 from datetime import date
 
-from datetime import date
 
-# Tarifas configurables (puedes moverlas a un archivo de configuración si quieres)
+
+
 DAILY_RATE = 50.0        # Tarifa normal por día
 EXTENSION_RATE = 70.0    # Tarifa de prórroga por día
 VALID_PAYMENT_METHODS = {"efectivo", "cheque", "tarjeta de crédito"}
 
 
+
 class RentalContract:
     def __init__(
         self,
-        tourist: 'Tourist',
-        car: 'Car',
+        tourist: Tourist,
+        car: Car,
         start_date: date,
         end_date: date,
         extension_days: int = 0,
         with_driver: bool = False,
         payment_method: str = "efectivo"
     ):
-        # === Validaciones ===
-        if not isinstance(start_date, date) or not isinstance(end_date, date):
-            raise TypeError("Las fechas deben ser objetos 'datetime.date'")
         if start_date > end_date:
-            raise ValueError("La fecha de inicio no puede ser posterior a la fecha de fin.")
+            raise ValueError("La fecha de inicio no puede ser posterior a la de fin.")
         if extension_days < 0:
             raise ValueError("La prórroga no puede ser negativa.")
         if payment_method not in VALID_PAYMENT_METHODS:
-            raise ValueError(
-                f"Forma de pago inválida. Debe ser: {', '.join(VALID_PAYMENT_METHODS)}"
-            )
+            raise ValueError(f"Forma de pago inválida. Debe ser: {', '.join(VALID_PAYMENT_METHODS)}")
         if car.status != "disponible":
             raise ValueError(f"El auto {car.plate} no está disponible para alquiler.")
 
-        # === Asignación de atributos ===
         self.tourist = tourist
         self.car = car
         self.start_date = start_date
@@ -181,28 +210,30 @@ class RentalContract:
         self.extension_days = extension_days
         self.with_driver = with_driver
         self.payment_method = payment_method
-
-        # === Cálculo del importe total ===
         self.total_amount = self._calculate_total()
-
-        # === Actualizar estado del auto ===
         self.car.status = "alquilado"
 
     def _calculate_total(self) -> float:
-        """Calcula el importe total: (días de contrato × tarifa normal) + (prórroga × tarifa especial)"""
-        # Incluye ambos días: ejemplo: 1 al 3 → 3 días
         rental_days = (self.end_date - self.start_date).days + 1
-        base_amount = rental_days * DAILY_RATE
-        extension_amount = self.extension_days * EXTENSION_RATE
-        total = base_amount + extension_amount
-        return round(total, 2)
+        return round(rental_days * DAILY_RATE + self.extension_days * EXTENSION_RATE, 2)
 
-    def __str__(self):
-        return (
-            f"Contrato({self.tourist.name}, {self.car.plate}, "
-            f"{self.start_date} → {self.end_date}, "
-            f"prórroga={self.extension_days}d, total=${self.total_amount})"
-        )
 
-    def __repr__(self):
-        return self.__str__()
+
+    def print_all_attributes(self):
+        print("\n" + "="*60)
+        print("📄 DATOS COMPLETOS DEL CONTRATO CREADO:")
+        print(f"  ➤ Nombre del turista: {self.tourist.name}")
+        print(f"  ➤ Pasaporte: {self.tourist.passport_number}")
+        print(f"  ➤ País: {self.tourist.country}")
+        print(f"  ➤ Auto: {self.car.brand} {self.car.model} ({self.car.plate})")
+        print(f"  ➤ Color del auto: {self.car.color}")
+        print(f"  ➤ Estado del auto: {self.car.status}")
+        print(f"  ➤ Fecha de inicio: {self.start_date}")
+        print(f"  ➤ Fecha de fin: {self.end_date}")
+        print(f"  ➤ Días contratados: {(self.end_date - self.start_date).days + 1}")
+        print(f"  ➤ Prórroga (días): {self.extension_days}")
+        print(f"  ➤ Con conductor: {'Sí' if self.with_driver else 'No'}")
+        print(f"  ➤ Forma de pago: {self.payment_method}")
+        print(f"  ➤ Importe total: ${self.total_amount:.2f}")
+        print("="*60 + "\n")
+

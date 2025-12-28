@@ -1,105 +1,11 @@
 import flet as ft
-from datetime import date, timedelta  # ← ahora con timedelta
+from datetime import date, timedelta
+from dataAbstration import *
 
-# ───────────────
-# Clase Tourist
-# ───────────────
-class Tourist:
-    def __init__(self, name: str, passport_number: str, country: str):
-        self.name = name
-        self.passport_number = passport_number
-        self.country = country
-
-
-# ───────────────
-# Clase Car
-# ───────────────
-class Car:
-    def __init__(self, plate: str, brand: str, model: str, color: str, status: str = "disponible"):
-        self.plate = plate
-        self.brand = brand
-        self.model = model
-        self.color = color
-        self.total_km = 0
-        self.status = status
-    
-    def __str__(self):
-        return f"{self.brand} {self.model}"
-    
-    def get_status_color(self):
-        if self.status == "disponible":
-            return ft.Colors.GREEN_700
-        elif self.status == "alquilado":
-            return ft.Colors.GREY_500
-        elif self.status == "taller":
-            return ft.Colors.RED_700
-        else:
-            return ft.Colors.BLUE_700
-
-
-# ───────────────
-# Clase RentalContract
-# ───────────────
 DAILY_RATE = 50.0
 EXTENSION_RATE = 70.0
 VALID_PAYMENT_METHODS = {"efectivo", "cheque", "tarjeta de crédito"}
 
-class RentalContract:
-    def __init__(
-        self,
-        tourist: Tourist,
-        car: Car,
-        start_date: date,
-        end_date: date,
-        extension_days: int = 0,
-        with_driver: bool = False,
-        payment_method: str = "efectivo"
-    ):
-        if start_date > end_date:
-            raise ValueError("La fecha de inicio no puede ser posterior a la de fin.")
-        if extension_days < 0:
-            raise ValueError("La prórroga no puede ser negativa.")
-        if payment_method not in VALID_PAYMENT_METHODS:
-            raise ValueError(f"Forma de pago inválida. Debe ser: {', '.join(VALID_PAYMENT_METHODS)}")
-        if car.status != "disponible":
-            raise ValueError(f"El auto {car.plate} no está disponible para alquiler.")
-
-        self.tourist = tourist
-        self.car = car
-        self.start_date = start_date
-        self.end_date = end_date
-        self.extension_days = extension_days
-        self.with_driver = with_driver
-        self.payment_method = payment_method
-        self.total_amount = self._calculate_total()
-        self.car.status = "alquilado"
-
-    def _calculate_total(self) -> float:
-        rental_days = (self.end_date - self.start_date).days + 1
-        return round(rental_days * DAILY_RATE + self.extension_days * EXTENSION_RATE, 2)
-
-    def print_all_attributes(self):
-        print("\n" + "="*60)
-        print("📄 DATOS COMPLETOS DEL CONTRATO CREADO:")
-        print(f"  ➤ Nombre del turista: {self.tourist.name}")
-        print(f"  ➤ Pasaporte: {self.tourist.passport_number}")
-        print(f"  ➤ País: {self.tourist.country}")
-        print(f"  ➤ Auto: {self.car.brand} {self.car.model} ({self.car.plate})")
-        print(f"  ➤ Color del auto: {self.car.color}")
-        print(f"  ➤ Estado del auto: {self.car.status}")
-        print(f"  ➤ Fecha de inicio: {self.start_date}")
-        print(f"  ➤ Fecha de fin: {self.end_date}")
-        print(f"  ➤ Días contratados: {(self.end_date - self.start_date).days + 1}")
-        print(f"  ➤ Prórroga (días): {self.extension_days}")
-        print(f"  ➤ Con conductor: {'Sí' if self.with_driver else 'No'}")
-        print(f"  ➤ Forma de pago: {self.payment_method}")
-        print(f"  ➤ Importe total: ${self.total_amount:.2f}")
-        print("="*60 + "\n")
-
-
-# ───────────────
-# Datos de ejemplo
-# ───────────────
 COUNTRIES = [
     "Argentina", "Brasil", "Chile", "Colombia", "México",
     "Perú", "España", "Francia", "Italia", "Alemania",
@@ -153,6 +59,22 @@ SAMPLE_TOURISTS = [
     Tourist("Ahmet Yılmaz", "TR012345", "Turquía"),
     Tourist("Sven Eriksson", "NO678901", "Noruega"),
 ]
+
+contracts = []
+
+def print_all_contracts():
+    print("\n" + "="*60)
+    print(f"📋 LISTA ACTUAL DE CONTRATOS ({len(contracts)} en total)")
+    print("="*60)
+    if not contracts:
+        print("  (No hay contratos registrados)")
+    else:
+        for i, c in enumerate(contracts, 1):
+            resumen = f"#{i}: [{c.tourist.name}] - {c.car.plate} - ${c.total_amount:.2f}"
+            if c.extension_days > 0:
+                resumen += f" (Prórroga: {c.extension_days}d)"
+            print(f"  {resumen}")
+    print("="*60 + "\n")
 
 
 class SelectablePanel(ft.Container):
@@ -294,10 +216,139 @@ class InfoTable(ft.DataTable):
         self.rows.append(new_row)
 
 
+class ContractsTable(ft.DataTable):
+    def __init__(self, contracts=None, **kwargs):
+        columns = [
+            ft.DataColumn(ft.Text("Turista", weight="bold")),
+            ft.DataColumn(ft.Text("Auto", weight="bold")),
+            ft.DataColumn(ft.Text("Marca", weight="bold")),
+            ft.DataColumn(ft.Text("Modelo", weight="bold")),
+            ft.DataColumn(ft.Text("Pago", weight="bold")),
+            ft.DataColumn(ft.Text("Inicio", weight="bold")),
+            ft.DataColumn(ft.Text("Fin", weight="bold")),
+            ft.DataColumn(ft.Text("Prórroga", weight="bold")),
+            ft.DataColumn(ft.Text("Chofer", weight="bold")),
+            ft.DataColumn(ft.Text("Total", weight="bold")),
+        ]
+        super().__init__(
+            columns=columns,
+            border=ft.border.all(1, ft.Colors.GREY),
+            border_radius=15,
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            divider_thickness=0,
+            column_spacing=10,
+            **kwargs
+        )
+
+        if contracts:
+            for c in contracts:
+                self.add_contract(c)
+
+    def add_contract(self, contract):
+        chofer = "Sí" if contract.with_driver else "No"
+        row = ft.DataRow(
+            cells=[
+                ft.DataCell(ft.Text(contract.tourist.name, color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(contract.car.plate, color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(contract.car.brand, color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(contract.car.model, color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(contract.payment_method, color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(str(contract.start_date), color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(str(contract.end_date), color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(str(contract.extension_days), color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(chofer, color=ft.Colors.BLACK)),
+                ft.DataCell(ft.Text(f"${contract.total_amount:.2f}", color=ft.Colors.BLACK)),
+            ]
+        )
+        self.rows.append(row)
+
+
+class BrandModelReportTable(ft.DataTable):
+    def __init__(self, contracts, cars, **kwargs):
+        columns = [
+            ft.DataColumn(ft.Text("Marca", weight="bold")),
+            ft.DataColumn(ft.Text("Modelo", weight="bold")),
+            ft.DataColumn(ft.Text("Autos", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Días", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Efectivo", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Cheque", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Tarjeta", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Total", weight="bold", text_align=ft.TextAlign.RIGHT)),
+        ]
+        super().__init__(
+            columns=columns,
+            border=ft.border.all(1, ft.Colors.GREY),
+            border_radius=15,
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            divider_thickness=0,
+            column_spacing=10,
+            **kwargs
+        )
+        self.populate(contracts, cars)
+
+    def populate(self, contracts, cars):
+        from collections import defaultdict
+
+        by_brand_model = defaultdict(list)
+        for c in contracts:
+            key = (c.car.brand, c.car.model)
+            by_brand_model[key].append(c)
+
+        car_count = defaultdict(int)
+        for car in cars:
+            car_count[(car.brand, car.model)] += 1
+
+        total_general = 0.0
+
+        for (brand, model), contract_list in sorted(by_brand_model.items()):
+            dias = sum((c.end_date - c.start_date).days + 1 for c in contract_list)
+            count = car_count.get((brand, model), 0)
+            
+            efectivo = sum(c.total_amount for c in contract_list if c.payment_method == "efectivo")
+            cheque = sum(c.total_amount for c in contract_list if c.payment_method == "cheque")
+            tarjeta = sum(c.total_amount for c in contract_list if c.payment_method == "tarjeta de crédito")
+            subtotal = efectivo + cheque + tarjeta
+            total_general += subtotal
+
+            self.rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(brand, color=ft.Colors.BLACK)),
+                        ft.DataCell(ft.Text(model, color=ft.Colors.BLACK)),
+                        ft.DataCell(ft.Text(str(count), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(str(dias), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${efectivo:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${cheque:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${tarjeta:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${subtotal:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                    ]
+                )
+            )
+
+        # ✅ TOTAL GENERAL sin column_span
+        self.rows.append(
+            ft.DataRow(
+                cells=[
+                    ft.DataCell(ft.Text("TOTAL GENERAL", weight="bold", color=ft.Colors.BLUE_800)),
+                    ft.DataCell(ft.Text("")),
+                    ft.DataCell(ft.Text("")),
+                    ft.DataCell(ft.Text("")),
+                    ft.DataCell(ft.Text("")),
+                    ft.DataCell(ft.Text("")),
+                    ft.DataCell(ft.Text("")),
+                    ft.DataCell(ft.Text(f"${total_general:.2f}", weight="bold", color=ft.Colors.BLUE_800, text_align=ft.TextAlign.RIGHT)),
+                ]
+            )
+        )
+
+
 class Formulary(ft.Container):
-    def __init__(self, page, info_table):
+    def __init__(self, page, info_table, contracts_table):
         self.page = page
         self.info_table = info_table
+        self.contracts_table = contracts_table
         self.is_country_panel_open = False
         self.is_car_panel_open = False
         self.selected_car = None
@@ -315,7 +366,6 @@ class Formulary(ft.Container):
             color=ft.Colors.BLACK, border_color=ft.Colors.GREY_500
         )
         
-        # === Campos simplificados ===
         self.rental_days_field = ft.TextField(
             label="Días de contrato",
             dense=True,
@@ -377,7 +427,7 @@ class Formulary(ft.Container):
                 self.passport_field,
                 self.country_input,
                 self.car_input,
-                self.rental_days_field,     # ← simplificado
+                self.rental_days_field,
                 self.extension_field,
                 self.payment_dropdown,
                 self.driver_switch,
@@ -470,12 +520,10 @@ class Formulary(ft.Container):
             self.page.update()
             return
 
-        # === Leer días de contrato y prórroga ===
         rental_days_str = self.rental_days_field.value or "1"
         extension_str = self.extension_field.value or "0"
         payment_method = self.payment_dropdown.value
 
-        # Validar días de contrato
         try:
             rental_days = int(rental_days_str)
             if rental_days <= 0:
@@ -483,7 +531,6 @@ class Formulary(ft.Container):
         except ValueError:
             rental_days = 1
 
-        # Validar prórroga
         try:
             extension_days = int(extension_str)
             if extension_days < 0:
@@ -491,11 +538,9 @@ class Formulary(ft.Container):
         except ValueError:
             extension_days = 0
 
-        # ✅ Fechas calculadas automáticamente
         start_date = date.today()
         end_date = start_date + timedelta(days=rental_days - 1)
 
-        # === Crear contrato REAL ===
         tourist = Tourist(name, passport, country)
         try:
             contract = RentalContract(
@@ -508,14 +553,15 @@ class Formulary(ft.Container):
                 payment_method=payment_method
             )
 
-            # ✅ IMPRIMIR TODOS LOS ATRIBUTOS
             contract.print_all_attributes()
 
-            # Actualizar tabla (solo para UI)
-            self.info_table.add_tourist(name=name, passport=passport, country=country)
-            self.info_table.page.update()
+            contracts.append(contract)
+            print_all_contracts()
 
-            # Limpiar campos
+            self.info_table.add_tourist(name=name, passport=passport, country=country)
+            self.contracts_table.add_contract(contract)
+            self.page.update()
+
             self.name_field.value = ""
             self.passport_field.value = ""
             self.country_input.value = ""
@@ -538,7 +584,6 @@ class Formulary(ft.Container):
 def main(page: ft.Page):
     page.title = "Formulario con Países y Autos"
     page.padding = 20
-    page.scroll = ft.ScrollMode.AUTO
     page.theme_mode = ft.ThemeMode.LIGHT
 
     page.appbar = ft.AppBar(
@@ -550,25 +595,67 @@ def main(page: ft.Page):
     )
 
     info_table = InfoTable(tourists=SAMPLE_TOURISTS)
+    contracts_table = ContractsTable()
+    brand_model_table = BrandModelReportTable(contracts=contracts, cars=SAMPLE_CARS)
 
-    table_container = ft.Container(
-        content=ft.Column(
-            controls=[info_table],
-            scroll=ft.ScrollMode.AUTO,
-            height=750,
-        ),
-        height=800,
-        expand=False,
-        bgcolor=ft.Colors.WHITE,
+    # ✅ Scroll en cada pestaña
+    turistas_scroll = ft.Column(
+        controls=[info_table],
+        scroll=ft.ScrollMode.AUTO,
+        expand=True,
     )
 
-    form = Formulary(page=page, info_table=info_table)
+    contratos_scroll = ft.Column(
+        controls=[contracts_table],
+        scroll=ft.ScrollMode.AUTO,
+        expand=True,
+    )
+
+    marca_modelo_scroll = ft.Column(
+        controls=[brand_model_table],  # ← CORRECTO: sin tilde
+        scroll=ft.ScrollMode.AUTO,
+        expand=True,
+    )
+
+    tabs = ft.Tabs(
+        selected_index=0,
+        animation_duration=300,
+        tabs=[
+            ft.Tab(
+                text="Turistas",
+                content=ft.Container(
+                    content=turistas_scroll,
+                    padding=10,
+                    expand=True,
+                ),
+            ),
+            ft.Tab(
+                text="Contratos",
+                content=ft.Container(
+                    content=contratos_scroll,
+                    padding=10,
+                    expand=True,
+                ),
+            ),
+            ft.Tab(
+                text="Marca/Modelo",
+                content=ft.Container(
+                    content=marca_modelo_scroll,
+                    padding=10,
+                    expand=True,
+                ),
+            ),
+        ],
+        expand=True,
+    )#ASA
+
+    form = Formulary(page=page, info_table=info_table, contracts_table=contracts_table)
 
     layout = ft.Row(
-        controls=[form, table_container],
+        controls=[form, tabs],
         spacing=20,
         vertical_alignment=ft.CrossAxisAlignment.START,
-        expand=False
+        expand=True,
     )
 
     page.add(layout)
