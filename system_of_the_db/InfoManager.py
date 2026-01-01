@@ -1,4 +1,4 @@
-from consructor import Tourist, Car, RentalContract
+from consructor import *
 from datetime import date
 
 class InfoManager:
@@ -43,7 +43,7 @@ class InfoManager:
             tourist.name = new_name
         if new_country:
             tourist.country = new_country
-        self.db.update_tourist(tourist)
+        self.db.update_turist(tourist)
         return True
 
     def find_tourist_by_passport(self, passport: str) -> Tourist | None:
@@ -80,7 +80,9 @@ class InfoManager:
         car = self.find_car_by_plate(plate)
         return car is not None and car.status == "disponible"
 
-    
+    # ────────────────────────────────
+    # 🔹 GESTIÓN DE CONTRATOS
+    # ────────────────────────────────
     
     def create_contract(
         self,
@@ -172,3 +174,50 @@ class InfoManager:
     def get_violators(self) -> list[RentalContract]:
         """Turistas con prórroga > 0 (Reporte 5)."""
         return [c for c in self.contracts if c.extension_days > 0]
+
+
+# === 🧪 PRUEBA DE CARGA DE DATOS DESDE LA BASE DE DATOS ===
+if __name__ == "__main__":
+    print("🧪 Iniciando prueba de InfoManager con base de datos...")
+    
+    # Crear instancia de la base de datos
+    db = SystemOfDb()
+    
+    # Crear InfoManager con referencia a la DB
+    info_mgr = InfoManager(db_ref=db)
+    
+    print("\n" + "="*80)
+    print("🌍 PAÍSES CARGADOS")
+    print("="*80)
+    for i, country in enumerate(info_mgr.countries, 1):
+        print(f"{i:3}. {country}")
+    
+    print("\n" + "="*80)
+    print("👤 TURISTAS CARGADOS")
+    print("="*80)
+    for i, t in enumerate(info_mgr.tourists, 1):
+        print(f"{i:3}. Nombre: {t.name} | Pasaporte: {t.passport_number} | País: {t.country}")
+    
+    print("\n" + "="*80)
+    print("🚗 AUTOS CARGADOS")
+    print("="*80)
+    for i, c in enumerate(info_mgr.cars, 1):
+        print(f"{i:3}. Placa: {c.plate} | {c.brand} {c.model} | Color: {c.color} | Estado: {c.status}")
+    
+    print("\n" + "="*80)
+    print("📄 CONTRATOS CARGADOS")
+    print("="*80)
+    for i, c in enumerate(info_mgr.contracts, 1):
+        print(f"{i:3}. Turista: {c.tourist.name} - Auto: {c.car.plate}")
+        print(f"     Fechas: {c.start_date} → {c.end_date} | Prórroga: {c.extension_days} días")
+        print(f"     Con chofer: {'Sí' if c.with_driver else 'No'} | Pago: {c.payment_method} | Total: ${c.total_amount:.2f}")
+        print("-" * 70)
+    
+    print("\n📊 RESUMEN FINAL")
+    print("="*50)
+    print(f"Países:   {len(info_mgr.countries)}")
+    print(f"Turistas: {len(info_mgr.tourists)}")
+    print(f"Autos:    {len(info_mgr.cars)}")
+    print(f"Contratos:{len(info_mgr.contracts)}")
+    
+    print("\n✅ Prueba completada exitosamente.")

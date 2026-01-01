@@ -2,10 +2,12 @@ import flet as ft
 from datetime import date, timedelta
 from collections import defaultdict
 from system_of_the_db import dataAbstration as ab
+from system_of_the_db import init as i
 
 # ================================
 # CONFIGURACIÓN Y DATOS DE EJEMPLO
 # ================================
+i.info_manager
 
 DAILY_RATE = 50.0
 EXTENSION_RATE = 70.0
