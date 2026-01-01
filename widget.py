@@ -1,52 +1,7 @@
 import flet as ft
 from datetime import date, timedelta
 from collections import defaultdict
-
-# ================================
-# CLASES DE DATOS (reemplazan dataAbstration.py)
-# ================================
-
-class Tourist:
-    def __init__(self, name, passport_number, country):
-        self.name = name
-        self.passport_number = passport_number  # ← pasaporte
-        self.country = country                   # ← país (string)
-
-class Car:
-    def __init__(self, plate, brand, model, color, status, total_km=0):
-        self.plate = plate
-        self.brand = brand
-        self.model = model
-        self.color = color
-        self.status = status  # "disponible", "alquilado", "taller"
-        self.total_km = total_km
-
-class RentalContract:
-    def __init__(self, tourist, car, start_date, end_date, extension_days=0, with_driver=False, payment_method="efectivo"):
-        self.tourist = tourist
-        self.car = car
-        self.start_date = start_date
-        self.end_date = end_date
-        self.extension_days = extension_days
-        self.with_driver = with_driver
-        self.payment_method = payment_method
-
-        # Cálculo del total
-        base_days = (end_date - start_date).days + 1
-        base_amount = base_days * 50.0
-        extension_amount = extension_days * 70.0
-        self.total_amount = base_amount + extension_amount
-
-    def print_all_attributes(self):
-        print(f"\n🆕 Nuevo contrato creado:")
-        print(f"   Turista: {self.tourist.name} ({self.tourist.passport_number})")
-        print(f"   País: {self.tourist.country}")
-        print(f"   Auto: {self.car.plate} ({self.car.brand} {self.car.model})")
-        print(f"   Fechas: {self.start_date} → {self.end_date}")
-        print(f"   Prórroga: {self.extension_days} días")
-        print(f"   Con chofer: {'Sí' if self.with_driver else 'No'}")
-        print(f"   Pago: {self.payment_method}")
-        print(f"   Total: ${self.total_amount:.2f}")
+from system_of_the_db import dataAbstration as ab
 
 # ================================
 # CONFIGURACIÓN Y DATOS DE EJEMPLO
@@ -65,29 +20,29 @@ COUNTRIES = [
 ]
 
 SAMPLE_CARS = [
-    Car("ABC123", "Toyota", "Corolla", "Rojo", "disponible"),
-    Car("XYZ789", "Honda", "Civic", "Azul", "disponible"),
-    Car("DEF456", "Ford", "Focus", "Blanco", "disponible"),
-    Car("GHI012", "Volkswagen", "Golf", "Gris", "disponible"),
-    Car("JKL345", "BMW", "Serie 3", "Negro", "disponible"),
-    Car("MNO678", "Mercedes", "C-Class", "Plateado", "disponible"),
-    Car("PQR901", "Audi", "A4", "Rojo", "disponible"),
-    Car("STU234", "Hyundai", "Elantra", "Azul", "disponible"),
-    Car("VWX567", "Nissan", "Sentra", "Blanco", "disponible"),
-    Car("YZA890", "Chevrolet", "Cruze", "Gris", "disponible"),
+    ab.Car("ABC123", "Toyota", "Corolla", "Rojo", "disponible"),
+    ab.Car("XYZ789", "Honda", "Civic", "Azul", "disponible"),
+    ab.Car("DEF456", "Ford", "Focus", "Blanco", "disponible"),
+    ab.Car("GHI012", "Volkswagen", "Golf", "Gris", "disponible"),
+    ab.Car("JKL345", "BMW", "Serie 3", "Negro", "disponible"),
+    ab.Car("MNO678", "Mercedes", "C-Class", "Plateado", "disponible"),
+    ab.Car("PQR901", "Audi", "A4", "Rojo", "disponible"),
+    ab.Car("STU234", "Hyundai", "Elantra", "Azul", "disponible"),
+    ab.Car("VWX567", "Nissan", "Sentra", "Blanco", "disponible"),
+    ab.Car("YZA890", "Chevrolet", "Cruze", "Gris", "disponible"),
 ]
 
 SAMPLE_TOURISTS = [
-    Tourist("Ana López", "ES123456", "España"),
-    Tourist("Carlos Mendoza", "MX789012", "México"),
-    Tourist("Sophie Dubois", "FR345678", "Francia"),
-    Tourist("Hiroshi Tanaka", "JP901234", "Japón"),
-    Tourist("Liam O'Connor", "IE567890", "Irlanda"),
-    Tourist("Amina Nkosi", "ZA234567", "Sudáfrica"),
-    Tourist("Raj Patel", "IN890123", "India"),
-    Tourist("Emma Johansson", "SE456789", "Suecia"),
-    Tourist("Luca Rossi", "IT012345", "Italia"),
-    Tourist("Yara Silva", "BR678901", "Brasil"),
+    ab.Tourist("Ana López", "ES123456", "España"),
+    ab.Tourist("Carlos Mendoza", "MX789012", "México"),
+    ab.Tourist("Sophie Dubois", "FR345678", "Francia"),
+    ab.Tourist("Hiroshi Tanaka", "JP901234", "Japón"),
+    ab.Tourist("Liam O'Connor", "IE567890", "Irlanda"),
+    ab.Tourist("Amina Nkosi", "ZA234567", "Sudáfrica"),
+    ab.Tourist("Raj Patel", "IN890123", "India"),
+    ab.Tourist("Emma Johansson", "SE456789", "Suecia"),
+    ab.Tourist("Luca Rossi", "IT012345", "Italia"),
+    ab.Tourist("Yara Silva", "BR678901", "Brasil"),
 ]
 
 contracts = []
@@ -122,7 +77,7 @@ def create_sample_contracts(tourists, cars, num=5):
         start = today - timedelta(days=10)
         end = start + timedelta(days=3)
         
-        contract = RentalContract(
+        contract = ab.RentalContract(
             tourist=tourist,
             car=car,
             start_date=start,
@@ -244,7 +199,6 @@ class CarPanel(SelectablePanel):
         )
 
 
-# === TABLA AUXILIAR: LISTA DE TURISTAS ===
 class InfoTable(ft.DataTable):
     def __init__(self, tourists_list, **kwargs):
         columns = [
@@ -277,7 +231,6 @@ class InfoTable(ft.DataTable):
         self.rows.append(new_row)
 
 
-# === REPORTE 4: LISTADO DE CONTRATOS ===
 class ContractsTable(ft.DataTable):
     def __init__(self, contracts_list, **kwargs):
         columns = [
@@ -325,7 +278,6 @@ class ContractsTable(ft.DataTable):
         self.rows.append(row)
 
 
-# === REPORTE 6: RESUMEN POR MARCAS Y MODELOS ===
 class BrandModelReportTable(ft.DataTable):
     def __init__(self, contracts_list, cars_list, **kwargs):
         columns = [
@@ -403,7 +355,6 @@ class BrandModelReportTable(ft.DataTable):
         )
 
 
-# === REPORTE 1: LISTADO DE USUARIOS POR PAÍS ===
 class UsersByCountryTable(ft.DataTable):
     """Reporte 1: Listado de usuarios por país"""
     def __init__(self, contracts_list, **kwargs):
@@ -442,7 +393,6 @@ class UsersByCountryTable(ft.DataTable):
             )
 
 
-# === REPORTE 2: LISTADO DE AUTOS ===
 class CarsListTable(ft.DataTable):
     def __init__(self, cars_list, **kwargs):
         columns = [
@@ -480,7 +430,6 @@ class CarsListTable(ft.DataTable):
             )
 
 
-# === REPORTE 7: RESUMEN POR PAÍSES ===
 class SummaryByCountryTable(ft.DataTable):
     def __init__(self, contracts_list, **kwargs):
         columns = [
@@ -506,7 +455,7 @@ class SummaryByCountryTable(ft.DataTable):
     def populate(self, contracts):
         by_country_model = defaultdict(lambda: defaultdict(list))
         for c in contracts:
-            country = c.tourist.country          # ← Nombre del país
+            country = c.tourist.country
             model_key = f"{c.car.brand} {c.car.model}"
             by_country_model[country][model_key].append(c)
 
@@ -520,7 +469,7 @@ class SummaryByCountryTable(ft.DataTable):
                 self.rows.append(
                     ft.DataRow(
                         cells=[
-                            ft.DataCell(ft.Text(country, color=ft.Colors.BLACK)),        # ← Nombre del país
+                            ft.DataCell(ft.Text(country, color=ft.Colors.BLACK)),
                             ft.DataCell(ft.Text(model_key, color=ft.Colors.BLACK)),
                             ft.DataCell(ft.Text(str(dias), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
                             ft.DataCell(ft.Text(str(extension), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
@@ -764,9 +713,9 @@ class Formulary(ft.Container):
         start_date = date.today()
         end_date = start_date + timedelta(days=rental_days - 1)
 
-        tourist = Tourist(name, passport, country)
+        tourist = ab.Tourist(name, passport, country)  # ✅
         try:
-            contract = RentalContract(
+            contract = ab.RentalContract(  # ✅
                 tourist=tourist,
                 car=car_obj,
                 start_date=start_date,
@@ -784,7 +733,6 @@ class Formulary(ft.Container):
             self.info_table.add_tourist(name=name, passport=passport, country=country)
             self.contracts_table.add_contract(contract)
 
-            # ✅ Actualizar reportes
             self.users_by_country_table.populate(self.contracts_list)
             self.summary_by_country_table.populate(self.contracts_list)
             self.cars_list_table.populate(self.cars_list)
@@ -822,7 +770,6 @@ def main(page: ft.Page):
         elevation=0
     )
 
-    # ✅ Crear contratos de ejemplo si no hay ninguno
     if not contracts:
         sample_contracts = create_sample_contracts(SAMPLE_TOURISTS, SAMPLE_CARS, num=6)
         contracts.extend(sample_contracts)
