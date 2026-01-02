@@ -162,6 +162,84 @@ class SystemOfDb:
             conn.close()
         return contracts
 
+    # ───────────────
+    # MÉTODOS DE GUARDADO INDIVIDUAL
+    # ───────────────
+    
+    def save_tourist(self, tourist: Tourist):
+        """Guarda un turista en la base de datos."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            # Asegurar país
+            cursor.execute("SELECT id FROM Country WHERE name = ?", (tourist.country,))
+            country_row = cursor.fetchone()
+            if not country_row:
+                cursor.execute("INSERT INTO Country (name) VALUES (?)", (tourist.country,))
+                country_id = cursor.lastrowid
+            else:
+                country_id = country_row[0]
+            
+            # Insertar turista
+            cursor.execute(
+                "INSERT INTO Tourist (name, passport_number, country_id) VALUES (?, ?, ?)",
+                (tourist.name, tourist.passport_number, country_id)
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"❌ Error al guardar turista: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def save_car(self, car: Car):
+        """Guarda un auto en la base de datos."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "INSERT INTO Car (plate, brand, model, color, status, total_km) VALUES (?, ?, ?, ?, ?, ?)",
+                (car.plate, car.brand, car.model, car.color, car.status, car.total_km or 0.0)
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"❌ Error al guardar auto: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def update_tourist(self, tourist: Tourist):
+        """Actualiza un turista existente."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "UPDATE Tourist SET name = ?, country_id = (SELECT id FROM Country WHERE name = ?) WHERE passport_number = ?",
+                (tourist.name, tourist.country, tourist.passport_number)
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"❌ Error al actualizar turista: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def update_car(self, car: Car):
+        """Actualiza un auto existente."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "UPDATE Car SET brand = ?, model = ?, color = ?, status = ?, total_km = ? WHERE plate = ?",
+                (car.brand, car.model, car.color, car.status, car.total_km or 0.0, car.plate)
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"❌ Error al actualizar auto: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
+
     def save_contract(self, contract):
         """Guarda un contrato y sus entidades relacionadas."""
         conn = sqlite3.connect(self.db_path)
@@ -218,42 +296,59 @@ class SystemOfDb:
             conn.close()
 
     def _get_countries(self):
+        # Lista base de 150 países
         base_countries = [
-            "Argentina", "Brasil", "Chile", "Colombia", "México",
-            "Perú", "España", "Francia", "Italia", "Alemania",
-            "Japón", "Corea del Sur", "Estados Unidos", "Canadá", "Australia",
-            "India", "China", "Rusia", "Sudáfrica", "Egipto", "Portugal", "Suiza",
-            "Bélgica", "Holanda", "Noruega", "Suecia", "Dinamarca", "Polonia", "Turquía",
-            "Reino Unido", "Irlanda", "Grecia", "Finlandia", "Austria", "Hungría",
-            "República Checa", "Eslovaquia", "Eslovenia", "Croacia", "Serbia",
-            "Rumania", "Bulgaria", "Ucrania", "Bielorrusia", "Letonia", "Lituania", "Estonia",
-            "Islandia", "Nueva Zelanda", "Singapur", "Malasia", "Tailandia", "Vietnam",
-            "Filipinas", "Indonesia", "Pakistán", "Bangladés", "Nigeria", "Kenia",
-            "Ghana", "Etiopía", "Marruecos", "Argelia", "Túnez", "Senegal", "Camerún",
-            "Chile", "Uruguay", "Paraguay", "Bolivia", "Ecuador", "Venezuela", "Costa Rica",
-            "Panamá", "República Dominicana", "Puerto Rico", "Cuba", "Honduras", "Guatemala",
-            "El Salvador", "Nicaragua", "Jamaica", "Trinidad y Tobago", "Bahamas", "Barbados",
-            "Qatar", "Emiratos Árabes Unidos", "Arabia Saudita", "Israel", "Líbano", "Irán",
-            "Irak", "Afganistán", "Nepal", "Sri Lanka", "Mongolia", "Kazajistán", "Uzbekistán"
+            "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda", "Arabia Saudita", 
+            "Argelia", "Argentina", "Armenia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bangladés", 
+            "Barbados", "Baréin", "Bélgica", "Belice", "Benín", "Bielorrusia", "Birmania", "Bolivia", "Bosnia y Herzegovina", 
+            "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Bután", "Cabo Verde", "Camboya", 
+            "Camerún", "Canadá", "Catar", "Chad", "Chile", "China", "Chipre", "Ciudad del Vaticano", "Colombia", 
+            "Comoras", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", 
+            "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", 
+            "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Etiopía", "Filipinas", "Finlandia", 
+            "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Granada", "Grecia", "Guatemala", "Guinea", 
+            "Guinea ecuatorial", "Guinea-Bisáu", "Guyana", "Haití", "Honduras", "Hungría", "India", "Indonesia", 
+            "Irak", "Irán", "Irlanda", "Islandia", "Islas Marshall", "Islas Salomón", "Israel", "Italia", "Jamaica", 
+            "Japón", "Jordania", "Kazajistán", "Kenia", "Kirguistán", "Kiribati", "Kuwait", "Laos", "Lesoto", 
+            "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Madagascar", 
+            "Malasia", "Malaui", "Maldivas", "Mali", "Malta", "Marruecos", "Mauricio", "Mauritania", "México", 
+            "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montenegro", "Mozambique", "Namibia", "Nauru", 
+            "Nepal", "Nicaragua", "Níger", "Nigeria", "Noruega", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", 
+            "Palaos", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polonia", "Portugal", "Reino Unido", 
+            "República Centroafricana", "República Checa", "República Democrática del Congo", "República del Congo", 
+            "República Dominicana", "Ruanda", "Rumania", "Rusia", "Samoa", "San Cristóbal y Nieves", "San Marino", 
+            "San Vicente y las Granadinas", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia", "Seychelles", 
+            "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Sudáfrica", "Sudán", "Sudán del Sur", 
+            "Suecia", "Suiza", "Surinam", "Tailandia", "Tanzania", "Tayikistán", "Timor Oriental", "Togo", "Tonga", 
+            "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", 
+            "Uzbekistán", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Yibuti", "Zambia", "Zimbabue"
         ]
-        while len(base_countries) < 100:
+        # Asegurar 150 países
+        while len(base_countries) < 150:
             base_countries.append(f"País {len(base_countries) + 1}")
-        return list(set(base_countries))[:100]
+        return list(set(base_countries))[:150]
 
     def _get_cars_data(self):
         brands_models = [
-            ("Toyota", "Corolla"), ("Honda", "Civic"), ("Ford", "Focus"),
-            ("Volkswagen", "Golf"), ("BMW", "Serie 3"), ("Mercedes", "C-Class"),
-            ("Audi", "A4"), ("Hyundai", "Elantra"), ("Nissan", "Sentra"),
-            ("Chevrolet", "Cruze"), ("Kia", "Forte"), ("Mazda", "3"),
-            ("Subaru", "Impreza"), ("Tesla", "Model 3"), ("Peugeot", "308"),
-            ("Renault", "Megane"), ("Fiat", "Tipo"), ("Suzuki", "Swift"),
-            ("Lexus", "ES"), ("Volvo", "XC40")
+            ("Toyota", "Corolla"), ("Toyota", "Camry"), ("Toyota", "RAV4"), ("Toyota", "Hilux"),
+            ("Honda", "Civic"), ("Honda", "Accord"), ("Honda", "CR-V"), ("Honda", "HR-V"),
+            ("Ford", "Focus"), ("Ford", "Fiesta"), ("Ford", "Mustang"), ("Ford", "Ranger"),
+            ("Volkswagen", "Golf"), ("Volkswagen", "Polo"), ("Volkswagen", "Passat"), ("Volkswagen", "Tiguan"),
+            ("BMW", "Serie 3"), ("BMW", "Serie 5"), ("BMW", "X3"), ("BMW", "X5"),
+            ("Mercedes", "C-Class"), ("Mercedes", "E-Class"), ("Mercedes", "GLC"), ("Mercedes", "GLE"),
+            ("Audi", "A4"), ("Audi", "A6"), ("Audi", "Q5"), ("Audi", "Q7"),
+            ("Hyundai", "Elantra"), ("Hyundai", "Tucson"), ("Hyundai", "Santa Fe"), ("Kia", "Forte"),
+            ("Kia", "Sportage"), ("Kia", "Sorento"), ("Nissan", "Sentra"), ("Nissan", "Rogue"),
+            ("Chevrolet", "Cruze"), ("Chevrolet", "Equinox"), ("Chevrolet", "Tahoe"), ("Mazda", "3"),
+            ("Mazda", "CX-5"), ("Subaru", "Impreza"), ("Subaru", "Forester"), ("Tesla", "Model 3"),
+            ("Tesla", "Model Y"), ("Peugeot", "308"), ("Peugeot", "3008"), ("Renault", "Megane"),
+            ("Renault", "Duster"), ("Fiat", "Tipo"), ("Fiat", "500X"), ("Suzuki", "Swift"),
+            ("Suzuki", "Vitara"), ("Lexus", "ES"), ("Lexus", "RX"), ("Volvo", "XC40"), ("Volvo", "XC60")
         ]
-        colors = ["Rojo", "Azul", "Blanco", "Negro", "Gris", "Plateado"]
+        colors = ["Rojo", "Azul", "Blanco", "Negro", "Gris", "Plateado", "Verde", "Amarillo", "Naranja", "Morado"]
         plates = set()
         cars = []
-        for _ in range(50):
+        for _ in range(100):  # ← 100 autos
             brand, model = random.choice(brands_models)
             color = random.choice(colors)
             while True:
@@ -267,8 +362,8 @@ class SystemOfDb:
         return cars
 
     def _get_names(self):
-        first_names = ["Ana", "Carlos", "Sofía", "Luis", "María", "Javier"]
-        last_names = ["González", "Rodríguez", "Fernández", "López", "Martínez"]
+        first_names = ["Ana", "Carlos", "Sofía", "Luis", "María", "Javier", "Lucía", "Diego", "Valentina", "Miguel"]
+        last_names = ["González", "Rodríguez", "Fernández", "López", "Martínez", "Sánchez", "Pérez", "Gómez", "Díaz", "Hernández"]
         return first_names, last_names
 
     def _ensure_sample_data(self):
@@ -280,24 +375,26 @@ class SystemOfDb:
             if cursor.fetchone()[0] > 0:
                 return
 
-            # Países
+            # 150 Países
             countries = self._get_countries()
             cursor.executemany("INSERT INTO Country (name) VALUES (?)", [(c,) for c in countries])
+            print(f"✅ {len(countries)} países insertados.")
 
-            # Autos
+            # 100 Autos
             cars_data = self._get_cars_data()
             cursor.executemany(
                 "INSERT INTO Car (plate, brand, model, color, status, total_km) VALUES (?, ?, ?, ?, ?, ?)",
                 cars_data
             )
+            print(f"✅ {len(cars_data)} autos insertados.")
 
-            # Turistas
+            # 5 Turistas
             first_names, last_names = self._get_names()
             cursor.execute("SELECT id FROM Country")
             country_ids = [r[0] for r in cursor.fetchall()]
             tourists = []
             passports = set()
-            for i in range(30):
+            for i in range(5):  # ← Solo 5 turistas
                 name = f"{random.choice(first_names)} {random.choice(last_names)}"
                 while True:
                     passport = f"{random.choice('ABCEFGHJKLMNOPQRSTUVWXYZ')}{random.choice('ABCEFGHJKLMNOPQRSTUVWXYZ')}{random.randint(100000, 999999)}"
@@ -310,21 +407,22 @@ class SystemOfDb:
                 "INSERT INTO Tourist (name, passport_number, country_id) VALUES (?, ?, ?)",
                 tourists
             )
+            print(f"✅ {len(tourists)} turistas insertados.")
 
-            # Contratos
+            # Contratos (usando los 5 turistas y autos disponibles)
             cursor.execute("SELECT id FROM Tourist")
             tourist_ids = [r[0] for r in cursor.fetchall()]
             cursor.execute("SELECT id FROM Car WHERE status = 'disponible'")
             car_ids = [r[0] for r in cursor.fetchall()]
             contracts = []
-            for i in range(min(15, len(tourist_ids), len(car_ids))):
-                t_id = tourist_ids[i]
+            for i in range(min(10, len(tourist_ids), len(car_ids))):  # ← 10 contratos como ejemplo
+                t_id = tourist_ids[i % len(tourist_ids)]
                 c_id = car_ids[i]
                 start = date.today() - timedelta(days=random.randint(5, 30))
                 end = start + timedelta(days=random.randint(2, 7))
-                extension = random.choice([0, 2])
+                extension = random.choice([0, 0, 0, 2, 5])
                 with_driver = random.choice([True, False])
-                payment = random.choice(["efectivo", "tarjeta de crédito"])
+                payment = random.choice(["efectivo", "tarjeta de crédito", "cheque"])
                 base_days = (end - start).days + 1
                 total = base_days * 50.0 + extension * 70.0
                 contracts.append((t_id, c_id, start.isoformat(), end.isoformat(), extension, int(with_driver), payment, total))
@@ -334,15 +432,20 @@ class SystemOfDb:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 contracts
             )
+            print(f"✅ {len(contracts)} contratos insertados.")
 
             conn.commit()
-            print("✅ Base de datos inicializada con datos de ejemplo.")
+            print("🎉 Base de datos inicializada con datos personalizados.")
         except sqlite3.Error as e:
             print(f"❌ Error al insertar datos de ejemplo: {e}")
             conn.rollback()
         finally:
             conn.close()
 
+
+# =====================================================================
+# InfoManager - con función de actualización mejorada
+# =====================================================================
 
 from datetime import date
 
@@ -364,6 +467,8 @@ class InfoManager:
         self.contracts = self.db.get_all_contracts()
         print(f"🔄 Sincronizado con DB: {len(self.countries)} países, {len(self.tourists)} turistas, "
               f"{len(self.cars)} autos, {len(self.contracts)} contratos.")
+
+    # ... (el resto de tus métodos de InfoManager se mantienen igual) ...
 
     # ────────────────────────────────
     # 🔹 GESTIÓN DE TURISTAS
@@ -388,7 +493,7 @@ class InfoManager:
             tourist.name = new_name
         if new_country:
             tourist.country = new_country
-        self.db.update_turist(tourist)
+        self.db.update_tourist(tourist)
         return True
 
     def find_tourist_by_passport(self, passport: str) -> Tourist | None:
@@ -486,7 +591,7 @@ class InfoManager:
             # Actualizar estado del auto en RAM
             car.status = "alquilado"
             
-            # Añadir turista si es nuevo (aunque ya debería existir)
+            # Añadir turista si es nuevo
             if not any(t.passport_number == tourist.passport_number for t in self.tourists):
                 self.tourists.append(tourist)
                 
@@ -522,8 +627,9 @@ class InfoManager:
 
 
 # === 🧪 PRUEBA DE CARGA DE DATOS DESDE LA BASE DE DATOS ===
+# === 🧪 PRUEBA COMPLETA: IMPRIMIR + INSERTAR + VOLVER A IMPRIMIR ===
 if __name__ == "__main__":
-    print("🧪 Iniciando prueba de InfoManager con base de datos...")
+    print("🧪 Iniciando prueba COMPLETA de InfoManager con base de datos...")
     
     # Crear instancia de la base de datos
     db = SystemOfDb()
@@ -531,38 +637,110 @@ if __name__ == "__main__":
     # Crear InfoManager con referencia a la DB
     info_mgr = InfoManager(db_ref=db)
     
+    # ────────────────────────────────────────
+    # IMPRIMIR DATOS INICIALES
+    # ────────────────────────────────────────
     print("\n" + "="*80)
-    print("🌍 PAÍSES CARGADOS")
+    print("🌍 LISTADO INICIAL DE PAÍSES")
     print("="*80)
-    for i, country in enumerate(info_mgr.countries, 1):
+    for i, country in enumerate(info_mgr.countries[:10], 1):  # Mostrar solo 10 de 150
         print(f"{i:3}. {country}")
-    
+    if len(info_mgr.countries) > 10:
+        print(f"    ... y {len(info_mgr.countries) - 10} más")
+
     print("\n" + "="*80)
-    print("👤 TURISTAS CARGADOS")
+    print("👤 LISTADO INICIAL DE TURISTAS")
     print("="*80)
     for i, t in enumerate(info_mgr.tourists, 1):
         print(f"{i:3}. Nombre: {t.name} | Pasaporte: {t.passport_number} | País: {t.country}")
-    
+
     print("\n" + "="*80)
-    print("🚗 AUTOS CARGADOS")
+    print("🚗 LISTADO INICIAL DE AUTOS")
     print("="*80)
-    for i, c in enumerate(info_mgr.cars, 1):
+    for i, c in enumerate(info_mgr.cars[:10], 1):  # Mostrar solo 10 de 100
         print(f"{i:3}. Placa: {c.plate} | {c.brand} {c.model} | Color: {c.color} | Estado: {c.status}")
-    
+    if len(info_mgr.cars) > 10:
+        print(f"    ... y {len(info_mgr.cars) - 10} más")
+
     print("\n" + "="*80)
-    print("📄 CONTRATOS CARGADOS")
+    print("📄 LISTADO INICIAL DE CONTRATOS")
     print("="*80)
     for i, c in enumerate(info_mgr.contracts, 1):
+        chofer = "Sí" if c.with_driver else "No"
         print(f"{i:3}. Turista: {c.tourist.name} - Auto: {c.car.plate}")
         print(f"     Fechas: {c.start_date} → {c.end_date} | Prórroga: {c.extension_days} días")
-        print(f"     Con chofer: {'Sí' if c.with_driver else 'No'} | Pago: {c.payment_method} | Total: ${c.total_amount:.2f}")
+        print(f"     Chofer: {chofer} | Pago: {c.payment_method} | Total: ${c.total_amount:.2f}")
         print("-" * 70)
+
+    # ────────────────────────────────────────
+    # AÑADIR NUEVAS ENTIDADES
+    # ────────────────────────────────────────
+    print("\n" + "="*80)
+    print("➕ AÑADIENDO NUEVAS ENTIDADES")
+    print("="*80)
     
-    print("\n📊 RESUMEN FINAL")
-    print("="*50)
+    # Añadir 2 turistas
+    new_tourist1 = info_mgr.add_tourist("NUEVO Turista 1", "NT001", "España")
+    new_tourist2 = info_mgr.add_tourist("NUEVO Turista 2", "NT002", "México")
+    
+    # Añadir 3 autos
+    new_car1 = info_mgr.add_car("NEW001", "Toyota", "Hilux", "Gris", "disponible")
+    new_car2 = info_mgr.add_car("NEW002", "Ford", "Ranger", "Blanco", "disponible")
+    new_car3 = info_mgr.add_car("NEW003", "Volkswagen", "Tiguan", "Azul", "disponible")
+    
+    # Añadir 2 contratos
+    from datetime import date, timedelta
+    today = date.today()
+    
+    contract1 = info_mgr.create_contract(
+        passport="NT001",
+        plate="NEW001",
+        start_date=today,
+        end_date=today + timedelta(days=5),
+        extension_days=0,
+        with_driver=True,
+        payment_method="tarjeta de crédito"
+    )
+    
+    contract2 = info_mgr.create_contract(
+        passport="NT002",
+        plate="NEW002",
+        start_date=today - timedelta(days=2),
+        end_date=today + timedelta(days=3),
+        extension_days=2,
+        with_driver=False,
+        payment_method="efectivo"
+    )
+    
+    print("✅ Entidades nuevas añadidas exitosamente.")
+    
+    # ────────────────────────────────────────
+    # IMPRIMIR DATOS ACTUALIZADOS
+    # ────────────────────────────────────────
+    print("\n" + "="*80)
+    print("🔄 DATOS ACTUALIZADOS DESPUÉS DE LAS INSERCIONES")
+    print("="*80)
     print(f"Países:   {len(info_mgr.countries)}")
     print(f"Turistas: {len(info_mgr.tourists)}")
     print(f"Autos:    {len(info_mgr.cars)}")
     print(f"Contratos:{len(info_mgr.contracts)}")
     
-    print("\n✅ Prueba completada exitosamente.")
+    # Mostrar los nuevos turistas
+    print("\n👤 NUEVOS TURISTAS AÑADIDOS:")
+    for t in [new_tourist1, new_tourist2]:
+        if t:
+            print(f"   - {t.name} ({t.passport_number}) de {t.country}")
+    
+    # Mostrar los nuevos autos
+    print("\n🚗 NUEVOS AUTOS AÑADIDOS:")
+    for c in [new_car1, new_car2, new_car3]:
+        if c:
+            print(f"   - {c.plate}: {c.brand} {c.model} ({c.color}) - {c.status}")
+    
+    # Mostrar los nuevos contratos
+    print("\n📄 NUEVOS CONTRATOS AÑADIDOS:")
+    for i, c in enumerate([contract1, contract2], 1):
+        if c:
+            print(f"   #{i}: {c.tourist.name} alquiló {c.car.plate} del {c.start_date} al {c.end_date}")
+    
+    print("\n✅ Prueba COMPLETA finalizada con éxito.")

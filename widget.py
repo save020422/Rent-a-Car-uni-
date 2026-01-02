@@ -826,4 +826,4 @@ def main(page: ft.Page):
 
     page.add(layout)
 
-ft.app(target=main)
+ft.app(target=main) 
