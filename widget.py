@@ -3,11 +3,11 @@ from datetime import date, timedelta
 from collections import defaultdict
 from system_of_the_db import dataAbstration as ab
 from system_of_the_db import init as i
+from system_of_the_db import consructor as co
 
-# ================================
-# CONFIGURACIÓN Y DATOS DE EJEMPLO
-# ================================
-i.info_manager
+
+
+
 
 DAILY_RATE = 50.0
 EXTENSION_RATE = 70.0
@@ -772,18 +772,16 @@ def main(page: ft.Page):
         elevation=0
     )
 
-    if not contracts:
-        sample_contracts = create_sample_contracts(SAMPLE_TOURISTS, SAMPLE_CARS, num=6)
-        contracts.extend(sample_contracts)
-        print("✅ Contratos de ejemplo creados para testing")
-        print_all_contracts()
-
-    info_table = InfoTable(tourists_list=SAMPLE_TOURISTS)
-    contracts_table = ContractsTable(contracts_list=contracts)
-    brand_model_table = BrandModelReportTable(contracts_list=contracts, cars_list=SAMPLE_CARS)
-    users_by_country_table = UsersByCountryTable(contracts_list=contracts)
-    cars_list_table = CarsListTable(cars_list=SAMPLE_CARS)
-    summary_by_country_table = SummaryByCountryTable(contracts_list=contracts)
+    # ✅ Pasar las listas de i.info_manager DIRECTAMENTE como referencias
+    info_table = InfoTable(tourists_list=i.info_manager.tourists)
+    contracts_table = ContractsTable(contracts_list=i.info_manager.contracts)
+    brand_model_table = BrandModelReportTable(
+        contracts_list=i.info_manager.contracts,
+        cars_list=i.info_manager.cars
+    )
+    users_by_country_table = UsersByCountryTable(contracts_list=i.info_manager.contracts)
+    cars_list_table = CarsListTable(cars_list=i.info_manager.cars)
+    summary_by_country_table = SummaryByCountryTable(contracts_list=i.info_manager.contracts)
 
     turistas_scroll = ft.Column(controls=[info_table], scroll=ft.ScrollMode.AUTO, expand=True)
     contratos_scroll = ft.Column(controls=[contracts_table], scroll=ft.ScrollMode.AUTO, expand=True)
@@ -813,9 +811,10 @@ def main(page: ft.Page):
         users_by_country_table=users_by_country_table,
         summary_by_country_table=summary_by_country_table,
         cars_list_table=cars_list_table,
-        tourists_list=SAMPLE_TOURISTS,
-        cars_list=SAMPLE_CARS,
-        contracts_list=contracts
+       
+        tourists_list=i.info_manager.tourists,
+        cars_list=i.info_manager.cars,
+        contracts_list=i.info_manager.contracts
     )
 
     layout = ft.Row(
@@ -827,6 +826,4 @@ def main(page: ft.Page):
 
     page.add(layout)
 
-
-if __name__ == "__main__":
-    ft.app(target=main)
+ft.app(target=main)
