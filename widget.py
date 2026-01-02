@@ -3,11 +3,6 @@ from datetime import date, timedelta
 from collections import defaultdict
 from system_of_the_db import dataAbstration as ab
 from system_of_the_db import init as i
-from system_of_the_db import consructor as co
-
-
-
-
 
 DAILY_RATE = 50.0
 EXTENSION_RATE = 70.0
@@ -20,79 +15,6 @@ COUNTRIES = [
     "India", "China", "Rusia", "Sudáfrica", "Egipto", "Portugal", "Suiza",
     "Bélgica", "Holanda", "Noruega", "Suecia", "Dinamarca", "Polonia", "Turquía"
 ]
-
-SAMPLE_CARS = [
-    ab.Car("ABC123", "Toyota", "Corolla", "Rojo", "disponible"),
-    ab.Car("XYZ789", "Honda", "Civic", "Azul", "disponible"),
-    ab.Car("DEF456", "Ford", "Focus", "Blanco", "disponible"),
-    ab.Car("GHI012", "Volkswagen", "Golf", "Gris", "disponible"),
-    ab.Car("JKL345", "BMW", "Serie 3", "Negro", "disponible"),
-    ab.Car("MNO678", "Mercedes", "C-Class", "Plateado", "disponible"),
-    ab.Car("PQR901", "Audi", "A4", "Rojo", "disponible"),
-    ab.Car("STU234", "Hyundai", "Elantra", "Azul", "disponible"),
-    ab.Car("VWX567", "Nissan", "Sentra", "Blanco", "disponible"),
-    ab.Car("YZA890", "Chevrolet", "Cruze", "Gris", "disponible"),
-]
-
-SAMPLE_TOURISTS = [
-    ab.Tourist("Ana López", "ES123456", "España"),
-    ab.Tourist("Carlos Mendoza", "MX789012", "México"),
-    ab.Tourist("Sophie Dubois", "FR345678", "Francia"),
-    ab.Tourist("Hiroshi Tanaka", "JP901234", "Japón"),
-    ab.Tourist("Liam O'Connor", "IE567890", "Irlanda"),
-    ab.Tourist("Amina Nkosi", "ZA234567", "Sudáfrica"),
-    ab.Tourist("Raj Patel", "IN890123", "India"),
-    ab.Tourist("Emma Johansson", "SE456789", "Suecia"),
-    ab.Tourist("Luca Rossi", "IT012345", "Italia"),
-    ab.Tourist("Yara Silva", "BR678901", "Brasil"),
-]
-
-contracts = []
-
-
-def print_all_contracts():
-    print("\n" + "="*60)
-    print(f"📋 LISTA ACTUAL DE CONTRATOS ({len(contracts)} en total)")
-    print("="*60)
-    if not contracts:
-        print("  (No hay contratos registrados)")
-    else:
-        for i, c in enumerate(contracts, 1):
-            resumen = f"#{i}: [{c.tourist.name}] - {c.car.plate} - ${c.total_amount:.2f}"
-            if c.extension_days > 0:
-                resumen += f" (Prórroga: {c.extension_days}d)"
-            print(f"  {resumen}")
-    print("="*60 + "\n")
-
-
-def create_sample_contracts(tourists, cars, num=5):
-    """Crea contratos de ejemplo para testing"""
-    sample_contracts = []
-    today = date.today()
-    
-    for i in range(min(num, len(tourists), len(cars))):
-        if cars[i].status != "disponible":
-            continue
-            
-        tourist = tourists[i]
-        car = cars[i]
-        start = today - timedelta(days=10)
-        end = start + timedelta(days=3)
-        
-        contract = ab.RentalContract(
-            tourist=tourist,
-            car=car,
-            start_date=start,
-            end_date=end,
-            extension_days=0 if i % 3 != 0 else 2,
-            with_driver=(i % 2 == 0),
-            payment_method="efectivo" if i % 3 == 0 else "tarjeta de crédito"
-        )
-        
-        sample_contracts.append(contract)
-        car.status = "alquilado"
-    
-    return sample_contracts
 
 
 class SelectablePanel(ft.Container):
@@ -484,17 +406,13 @@ class SummaryByCountryTable(ft.DataTable):
 
 class Formulary(ft.Container):
     def __init__(self, page, info_table, contracts_table,
-                 users_by_country_table, summary_by_country_table, cars_list_table,
-                 tourists_list, cars_list, contracts_list):
+                 users_by_country_table, summary_by_country_table, cars_list_table):
         self.page = page
         self.info_table = info_table
         self.contracts_table = contracts_table
         self.users_by_country_table = users_by_country_table
         self.summary_by_country_table = summary_by_country_table
         self.cars_list_table = cars_list_table
-        self.tourists_list = tourists_list
-        self.cars_list = cars_list
-        self.contracts_list = contracts_list
         self.is_country_panel_open = False
         self.is_car_panel_open = False
         self.selected_car = None
@@ -554,8 +472,9 @@ class Formulary(ft.Container):
         self.toggle_form_btn = ft.TextButton("▲ Ocultar formulario", on_click=self._toggle_form)
 
         def on_car_select(car):
+            # Buscar el auto real en la lista de InfoManager
             found_car = None
-            for c in self.cars_list:
+            for c in i.info_manager.cars:
                 if c.plate == car.plate:
                     found_car = c
                     break
@@ -570,7 +489,7 @@ class Formulary(ft.Container):
             self.selected_car = found_car
 
         self.country_panel = CountryPanel(input_field=self.country_input)
-        self.car_panel = CarPanel(items=self.cars_list, input_field=self.car_input, on_select=on_car_select)
+        self.car_panel = CarPanel(items=i.info_manager.cars, input_field=self.car_input, on_select=on_car_select)
 
         self.select_country_btn = ft.TextButton("Seleccionar país", on_click=lambda e: self._toggle_country_panel(e))
         self.select_car_btn = ft.TextButton("Seleccionar auto", on_click=lambda e: self._toggle_car_panel(e))
@@ -683,7 +602,14 @@ class Formulary(ft.Container):
             self.page.update()
             return
 
-        if car_obj.status != "disponible":
+        # ✅ VALIDAR que el auto esté disponible EN LA LISTA REAL DE InfoManager
+        real_car = None
+        for c in i.info_manager.cars:
+            if c.plate == car_obj.plate:
+                real_car = c
+                break
+        
+        if not real_car or real_car.status != "disponible":
             self.page.snack_bar = ft.SnackBar(
                 ft.Text("❌ Auto no disponible para alquilar"),
                 bgcolor=ft.Colors.RED_200
@@ -692,71 +618,65 @@ class Formulary(ft.Container):
             self.page.update()
             return
 
-        car_obj.status = "alquilado"
-
         rental_days_str = self.rental_days_field.value or "1"
         extension_str = self.extension_field.value or "0"
         payment_method = self.payment_dropdown.value
 
         try:
-            rental_days = int(rental_days_str)
-            if rental_days <= 0:
-                rental_days = 1
+            rental_days = max(1, int(rental_days_str))
+            extension_days = max(0, int(extension_str))
         except ValueError:
-            rental_days = 1
-
-        try:
-            extension_days = int(extension_str)
-            if extension_days < 0:
-                extension_days = 0
-        except ValueError:
-            extension_days = 0
+            rental_days, extension_days = 1, 0
 
         start_date = date.today()
         end_date = start_date + timedelta(days=rental_days - 1)
 
-        tourist = ab.Tourist(name, passport, country)  # ✅
-        try:
-            contract = ab.RentalContract(  # ✅
-                tourist=tourist,
-                car=car_obj,
-                start_date=start_date,
-                end_date=end_date,
-                extension_days=extension_days,
-                with_driver=with_driver,
-                payment_method=payment_method
-            )
+        # ✅ 1. CREAR CONTRATO EN InfoManager (guarda en DB + actualiza RAM)
+        contract = i.info_manager.create_contract(
+            passport=passport,
+            plate=real_car.plate,  # Usar el auto real de InfoManager
+            start_date=start_date,
+            end_date=end_date,
+            extension_days=extension_days,
+            with_driver=with_driver,
+            payment_method=payment_method
+        )
 
-            contract.print_all_attributes()
+        if contract is None:
+            return  # Los errores ya se mostraron en create_contract
 
-            self.contracts_list.append(contract)
-            print_all_contracts()
+        # ✅ 2. ACTUALIZAR LA UI CON LOS DATOS YA GUARDADOS
+        self.info_table.add_tourist(name=name, passport=passport, country=country)
+        self.contracts_table.add_contract(contract)
 
-            self.info_table.add_tourist(name=name, passport=passport, country=country)
-            self.contracts_table.add_contract(contract)
+        # ✅ 3. REFRESCAR REPORTES
+        self.users_by_country_table.rows.clear()
+        self.users_by_country_table.populate(i.info_manager.contracts)
+        
+        self.summary_by_country_table.rows.clear()
+        self.summary_by_country_table.populate(i.info_manager.contracts)
+        
+        self.cars_list_table.rows.clear()
+        self.cars_list_table.populate(i.info_manager.cars)
 
-            self.users_by_country_table.populate(self.contracts_list)
-            self.summary_by_country_table.populate(self.contracts_list)
-            self.cars_list_table.populate(self.cars_list)
-            self.page.update()
+        # ✅ 4. LIMPIAR FORMULARIO
+        self.name_field.value = ""
+        self.passport_field.value = ""
+        self.country_input.value = ""
+        self.car_input.value = ""
+        self.rental_days_field.value = ""
+        self.extension_field.value = ""
+        self.selected_car = None
+        self.car_panel._filter_and_update("")  # Refrescar panel de autos
 
-            self.name_field.value = ""
-            self.passport_field.value = ""
-            self.country_input.value = ""
-            self.rental_days_field.value = ""
-            self.extension_field.value = ""
-            self.selected_car = None
-            for field in [self.name_field, self.passport_field, self.country_input,
-                         self.rental_days_field, self.extension_field]:
-                field.update()
-
-        except Exception as ex:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"❌ Error: {str(ex)}"),
-                bgcolor=ft.Colors.RED_200
-            )
-            self.page.snack_bar.open = True
-            self.page.update()
+        # Actualizar todos los campos
+        self.name_field.update()
+        self.passport_field.update()
+        self.country_input.update()
+        self.car_input.update()
+        self.rental_days_field.update()
+        self.extension_field.update()
+        self.page.update()
 
 
 def main(page: ft.Page):
@@ -772,7 +692,7 @@ def main(page: ft.Page):
         elevation=0
     )
 
-    # ✅ Pasar las listas de i.info_manager DIRECTAMENTE como referencias
+    # ✅ USAR DIRECTAMENTE LAS LISTAS DE InfoManager (referencias)
     info_table = InfoTable(tourists_list=i.info_manager.tourists)
     contracts_table = ContractsTable(contracts_list=i.info_manager.contracts)
     brand_model_table = BrandModelReportTable(
@@ -810,11 +730,7 @@ def main(page: ft.Page):
         contracts_table=contracts_table,
         users_by_country_table=users_by_country_table,
         summary_by_country_table=summary_by_country_table,
-        cars_list_table=cars_list_table,
-       
-        tourists_list=i.info_manager.tourists,
-        cars_list=i.info_manager.cars,
-        contracts_list=i.info_manager.contracts
+        cars_list_table=cars_list_table
     )
 
     layout = ft.Row(
@@ -826,4 +742,5 @@ def main(page: ft.Page):
 
     page.add(layout)
 
-ft.app(target=main) 
+
+ft.app(target=main)
