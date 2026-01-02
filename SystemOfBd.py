@@ -1,6 +1,6 @@
 import os 
 import sqlite3
-
+from dataAbstration import *
 class SystemOfDb:
     def __init__(self):
         folder_path = "SrcDataBase"
