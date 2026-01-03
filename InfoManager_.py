@@ -1,40 +1,60 @@
-from SystemOfBd import *
+from SystemOfBd import SystemOfDb, Tourist, Car, RentalContract
 
 class InfoManager:
 
-    def __init__(self, SysOfbd = None):
-
-    
+    def __init__(self, SysOfbd: SystemOfDb = None):
         self.countries = []
         self.tourist = []
         self.contracts = []
-        self.cars = [ Car("ABC123", "Toyota", "Corolla", "Rojo", "disponible"),
-                        Car("XYZ789", "Honda", "Civic", "Azul", "disponible"),
-                        Car("DEF456", "Ford", "Focus", "Blanco", "disponible"),
-                        Car("GHI012", "Volkswagen", "Golf", "Gris", "disponible"),
-                        Car("JKL345", "BMW", "Serie 3", "Negro", "disponible"),
-                        Car("MNO678", "Mercedes", "C-Class", "Plateado", "disponible"),
-                        Car("PQR901", "Audi", "A4", "Rojo", "disponible"),
-                        Car("STU234", "Hyundai", "Elantra", "Azul", "disponible"),
-                        Car("VWX567", "Nissan", "Sentra", "Blanco", "disponible"),
-                        Car("YZA890", "Chevrolet", "Cruze", "Gris", "disponible"),]
-        
+        self.cars = []
         self.sys_of_bd = SysOfbd
-        self.load_all_data()
+        self.load_all_data()   
+
+   
+    def sync_all(self):
         
-    #esta funcion carga todos los datos de la db a el ifomanager
-    def load_all_data(self):
         try:
-            self.countries = self.sys_of_bd.get_all_countrys()
-            print("Si")
+            self.countries = self.sys_of_bd.get_all_countries()
+            self.tourist = self.sys_of_bd.get_all_tourists()
+            self.cars = self.sys_of_bd.get_all_cars()
+            self.contracts = self.sys_of_bd.get_all_contracts()
+            print("🔄 Listas sincronizadas con la BD")
+        except Exception as e:
+            print(f"❌ Error al sincronizar: {e}")
 
-        except:
-            print("no se puedo jefe")
+
+    def load_all_data(self):
         
-        
-    def incert_tourist(self,tourist):
+        self.sync_all()
+
+   
+    def incert_tourist(self, tourist: Tourist):
+       
         self.tourist.append(tourist)
-        pass 
+        print(" intentarlo")
+        try:
+            self.sys_of_bd.insert_tourist(tourist)
+            print(f"✅ Turista {tourist.name} insertado en BD")
+            self.sync_all()  
+        except Exception as e:
+            print(f"❌ Error al insertar turista: {e}")
 
-    def incert_contrats(self,contratcs):
-        self.contracts.append(contratcs)
+    def incert_contrats(self, contract: RentalContract):
+      
+        self.contracts.append(contract)
+        try:
+            self.sys_of_bd.insert_contract(contract)
+            print(f"✅ Contrato de {contract.tourist.name} insertado en BD")
+            self.sync_all()
+        except Exception as e:
+            print(f"❌ Error al insertar contrato: {e}")
+
+    def incert_car(self, car: Car):
+        
+        self.cars.append(car)
+        try:
+            self.sys_of_bd.insert_car(car)
+            print(f" Auto {car.plate} insertado en BD")
+            self.sync_all()
+        except Exception as e:
+            print(f"❌ Error al insertar auto: {e}")

@@ -491,23 +491,21 @@ class SummaryByCountryTable(ft.DataTable):
 
 
 class Formulary(ft.Container):
-    def __init__(self, page, info_table, contracts_table,
-                 users_by_country_table, summary_by_country_table, cars_list_table,
-                 tourists_list, cars_list, contracts_list):
+    def __init__( self, page: ft.Page, info_table: InfoTable, contracts_table: ContractsTable, users_by_country_table: UsersByCountryTable, summary_by_country_table: SummaryByCountryTable,
+                  cars_list_table: CarsListTable, info_manager:InfoManager):
         self.page = page
         self.info_table = info_table
         self.contracts_table = contracts_table
         self.users_by_country_table = users_by_country_table
         self.summary_by_country_table = summary_by_country_table
         self.cars_list_table = cars_list_table
-        self.tourists_list = tourists_list
-        self.cars_list = cars_list
-        self.contracts_list = contracts_list
+        self.info_manager = info_manager 
         self.is_country_panel_open = False
         self.is_car_panel_open = False
         self.selected_car = None
         self.is_form_expanded = True
 
+        #inputs
         self.name_field = ft.TextField(label="Nombre", dense=True, content_padding=5)
         self.passport_field = ft.TextField(label="Pasaporte", dense=True, content_padding=5)
         self.country_input = ft.TextField(
@@ -563,7 +561,7 @@ class Formulary(ft.Container):
 
         def on_car_select(car):
             found_car = None
-            for c in self.cars_list:
+            for c in self.info_manager.cars:
                 if c.plate == car.plate:
                     found_car = c
                     break
@@ -578,8 +576,7 @@ class Formulary(ft.Container):
             self.selected_car = found_car
 
         self.country_panel = CountryPanel(input_field=self.country_input)
-        self.car_panel = CarPanel(items=self.cars_list, input_field=self.car_input, on_select=on_car_select)
-
+        self.car_panel = CarPanel(items=self.info_manager.cars, input_field=self.car_input, on_select=on_car_select)
         self.select_country_btn = ft.TextButton("Seleccionar país", on_click=lambda e: self._toggle_country_panel(e))
         self.select_car_btn = ft.TextButton("Seleccionar auto", on_click=lambda e: self._toggle_car_panel(e))
 
@@ -607,7 +604,7 @@ class Formulary(ft.Container):
 
         self.country_panel.visible = False
         self.car_panel.visible = False
-
+        #herencia ( •̀ ω •́ )✧
         super().__init__(
             content=self.form_column,
             padding=14,
@@ -673,6 +670,7 @@ class Formulary(ft.Container):
         car_obj = self.selected_car
         with_driver = self.driver_switch.value
 
+        #por si se deja algun campo vacio 
         if not name or not passport or not country:
             self.page.snack_bar = ft.SnackBar(
                 ft.Text("❌ Faltan campos obligatorios"),
@@ -723,6 +721,7 @@ class Formulary(ft.Container):
         start_date = date.today()
         end_date = start_date + timedelta(days=rental_days - 1)
 
+       #instanciamos para poder ingresar los datos 
         tourist = Tourist(name, passport, country)
         try:
             contract = RentalContract(
@@ -734,12 +733,12 @@ class Formulary(ft.Container):
                 with_driver=with_driver,
                 payment_method=payment_method
             )
-
+            #testeo de lo contratos para saver si se estan anadiendo todos
             contract.print_all_attributes()
 
-            self.contracts_list.append(contract)
+            self.info_manager.incert_contrats(contract)
             print_all_contracts()
-
+        
             self.info_table.add_tourist(name=name, passport=passport, country=country)
             self.contracts_table.add_contract(contract)
 

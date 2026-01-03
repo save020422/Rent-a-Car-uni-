@@ -51,16 +51,15 @@ def main(page: ft.Page):
     )
 
     form = Formulary(
-        page=page,
-        info_table=info_table,
-        contracts_table=contracts_table,
-        users_by_country_table=users_by_country_table,
-        summary_by_country_table=summary_by_country_table,
-        cars_list_table=cars_list_table,
-        tourists_list=info_manager.tourist,
-        cars_list=info_manager.cars,
-        contracts_list=info_manager.contracts
+    page=page,
+    info_table=info_table,
+    contracts_table=contracts_table,
+    users_by_country_table=users_by_country_table,
+    summary_by_country_table=summary_by_country_table,
+    cars_list_table=cars_list_table,   # ← este faltaba
+    info_manager=info_manager
     )
+
 
     layout = ft.Row(
         controls=[form, tabs],

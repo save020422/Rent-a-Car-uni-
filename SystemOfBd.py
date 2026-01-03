@@ -1,45 +1,42 @@
-import os 
+import os
 import sqlite3
-from dataAbstration import *
+from datetime import date
+from dataAbstration import Tourist, Car, RentalContract
+
 
 class SystemOfDb:
 
     def __init__(self):
         folder_path = "SrcDataBase"
-        
-        os.makedirs(folder_path, exist_ok=True)# crea una carpeta si la misma no existe 
+        os.makedirs(folder_path, exist_ok=True)
         self.db_path = os.path.join(folder_path, "database.db")
         self._create_tables()
-        #self._insert_sample_data()
         self.countrys_incert()
+        self.cars_incrt()
 
     def _create_tables(self):
-        """Crea todas las tablas con sus relaciones."""
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
-        
-        # Tabla de Países (maestra)
+
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS Country (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE
         )
         """)
-        
-        # Tabla de Turistas
+
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS Tourist (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            passport_number TEXT NOT NULL UNIQUE, 
+            passport_number TEXT NOT NULL UNIQUE,
             country_id INTEGER NOT NULL,
             times_used_cars INTEGER DEFAULT 0,
             total_rental_value REAL DEFAULT 0.0,
             FOREIGN KEY (country_id) REFERENCES Country(id)
         )
         """)
-        
-        # Tabla de Autos
+
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS Car (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,8 +48,7 @@ class SystemOfDb:
             total_km REAL DEFAULT 0.0
         )
         """)
-        
-        # Tabla de Contratos (relación principal)
+
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS RentalContract (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,72 +64,110 @@ class SystemOfDb:
             FOREIGN KEY (car_id) REFERENCES Car(id) ON DELETE CASCADE
         )
         """)
-        
+
         connection.commit()
         connection.close()
 
-    def _insert_sample_data(self):
-        """Inserta datos de ejemplo para probar el sistema."""
+    def insert_country(self, country_name: str):
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
-        
         try:
-            # Verificar si ya existen datos
-            cursor.execute("SELECT COUNT(*) FROM Country")
-            if cursor.fetchone()[0] > 0:
-                return
-            
-            # Insertar países
-            countries = [
-                ("España",), ("México",), ("Francia",), ("Japón",), ("Estados Unidos",)
-            ]
-            cursor.executemany("INSERT INTO Country (name) VALUES (?)", countries)
-            
-            # Insertar autos
-            cars = [
-                ("ABC123", "Toyota", "Corolla", "Rojo", "disponible", 0.0),
-                ("XYZ789", "Honda", "Civic", "Azul", "disponible", 0.0),
-                ("DEF456", "Ford", "Focus", "Blanco", "disponible", 0.0)
-            ]
-            cursor.executemany("""
-                INSERT INTO Car (plate, brand, model, color, status, total_km) 
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, cars)
-            
-            # Insertar turistas
-            tourists = [
-                ("Ana López", "ES123456", 1, 0, 0.0),  # España (id=1)
-                ("Carlos Mendoza", "MX789012", 2, 0, 0.0),  # México (id=2)
-                ("Sophie Dubois", "FR345678", 3, 0, 0.0)   # Francia (id=3)
-            ]
-            cursor.executemany("""
-                INSERT INTO Tourist (name, passport_number, country_id, times_used_cars, total_rental_value) 
-                VALUES (?, ?, ?, ?, ?)
-            """, tourists)
-            
-            # Insertar contratos
-            from datetime import date, timedelta
-            today = date.today()
-            contracts = [
-                (1, 1, today.isoformat(), (today + timedelta(days=5)).isoformat(), 0, 0, "efectivo", 250.0),
-                (2, 2, (today - timedelta(days=3)).isoformat(), today.isoformat(), 2, 1, "tarjeta de crédito", 390.0)
-            ]
-            cursor.executemany("""
-                INSERT INTO RentalContract 
-                (tourist_id, car_id, start_date, end_date, extension_days, with_driver, payment_method, total_amount)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, contracts)
-            
+            cursor.execute("INSERT INTO Country (name) VALUES (?)", (country_name,))
             connection.commit()
-            print("✅ Datos de ejemplo insertados correctamente.")
-            
         except sqlite3.Error as e:
-            print(f"❌ Error al insertar datos de ejemplo: {e}")
+            print(f"❌ Error al insertar país: {e}")
             connection.rollback()
         finally:
             connection.close()
 
-    # Métodos para cargar datos (opcional, pero recomendados)
+    def insert_tourist(self, tourist: Tourist):
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+        try:
+            cursor.execute("SELECT id FROM Country WHERE name=?", (tourist.country,))
+            country_row = cursor.fetchone()
+            if not country_row:
+                cursor.execute("INSERT INTO Country (name) VALUES (?)", (tourist.country,))
+                connection.commit()
+                cursor.execute("SELECT id FROM Country WHERE name=?", (tourist.country,))
+                country_row = cursor.fetchone()
+            country_id = country_row[0]
+
+            cursor.execute("""
+                INSERT INTO Tourist (name, passport_number, country_id, times_used_cars, total_rental_value)
+                VALUES (?, ?, ?, ?, ?)
+            """, (tourist.name, tourist.passport_number, country_id, 0, 0.0))
+            connection.commit()
+        except sqlite3.Error as e:
+            print(f"❌ Error al insertar turista: {e}")
+            connection.rollback()
+        finally:
+            connection.close()
+
+    def insert_car(self, car: Car):
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO Car (plate, brand, model, color, status, total_km)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (car.plate, car.brand, car.model, car.color, car.status, car.total_km))
+            connection.commit()
+        except sqlite3.Error as e:
+            print(f"❌ Error al insertar auto: {e}")
+            connection.rollback()
+        finally:
+            connection.close()
+
+    def insert_contract(self, contract: RentalContract):
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+        try:
+            cursor.execute("SELECT id FROM Tourist WHERE passport_number=?", (contract.tourist.passport_number,))
+            tourist_row = cursor.fetchone()
+            if not tourist_row:
+                self.insert_tourist(contract.tourist)
+                cursor.execute("SELECT id FROM Tourist WHERE passport_number=?", (contract.tourist.passport_number,))
+                tourist_row = cursor.fetchone()
+            tourist_id = tourist_row[0]
+
+            cursor.execute("SELECT id, status FROM Car WHERE plate=?", (contract.car.plate,))
+            car_row = cursor.fetchone()
+            if not car_row:
+                self.insert_car(contract.car)
+                cursor.execute("SELECT id, status FROM Car WHERE plate=?", (contract.car.plate,))
+                car_row = cursor.fetchone()
+            car_id, car_status = car_row
+            if car_status != "disponible":
+                raise Exception(f"Auto '{contract.car.plate}' no está disponible (estado: {car_status})")
+
+            cursor.execute("""
+                INSERT INTO RentalContract (tourist_id, car_id, start_date, end_date, extension_days, with_driver, payment_method, total_amount)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (tourist_id, car_id,
+                  contract.start_date.isoformat(),
+                  contract.end_date.isoformat(),
+                  contract.extension_days,
+                  int(contract.with_driver),
+                  contract.payment_method,
+                  contract.total_amount))
+
+            cursor.execute("UPDATE Car SET status='alquilado' WHERE id=?", (car_id,))
+            cursor.execute("""
+                UPDATE Tourist
+                SET times_used_cars = times_used_cars + 1,
+                    total_rental_value = total_rental_value + ?
+                WHERE id = ?
+            """, (contract.total_amount, tourist_id))
+
+            connection.commit()
+            print(f"✅ Contrato insertado para {contract.tourist.name}")
+        except sqlite3.Error as e:
+            print(f"❌ Error al insertar contrato: {e}")
+            connection.rollback()
+        finally:
+            connection.close()
+
     def get_all_countries(self):
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
@@ -152,13 +186,9 @@ class SystemOfDb:
         """)
         tourists = []
         for row in cursor.fetchall():
-            tourist = Tourist(
-                name=row[0],
-                passport_number=row[1],
-                country=row[2],
-                times_used_cars=row[3],
-                total_rental_value=row[4]
-            )
+            tourist = Tourist(name=row[0], passport_number=row[1], country=row[2])
+            tourist.times_used_cars = row[3]
+            tourist.total_rental_value = row[4]
             tourists.append(tourist)
         connection.close()
         return tourists
@@ -169,22 +199,12 @@ class SystemOfDb:
         cursor.execute("SELECT plate, brand, model, color, status, total_km FROM Car")
         cars = []
         for row in cursor.fetchall():
-            car = Car(
-                plate=row[0],
-                brand=row[1],
-                model=row[2],
-                color=row[3],
-                status=row[4],
-                total_km=row[5]
-            )
+            car = Car(plate=row[0], brand=row[1], model=row[2], color=row[3], status=row[4], total_km=row[5])
             cars.append(car)
         connection.close()
         return cars
 
-
-    #this  funcion return all entided for the ram memory
     def get_all_contracts(self):
-        from datetime import date
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
         cursor.execute("""
@@ -200,19 +220,8 @@ class SystemOfDb:
         """)
         contracts = []
         for row in cursor.fetchall():
-            tourist = Tourist(
-                name=row[0],
-                passport_number=row[1],
-                country=row[2]
-            )
-            car = Car(
-                plate=row[3],
-                brand=row[4],
-                model=row[5],
-                color=row[6],
-                status=row[7],
-                total_km=row[8]
-            )
+            tourist = Tourist(name=row[0], passport_number=row[1], country=row[2])
+            car = Car(plate=row[3], brand=row[4], model=row[5], color=row[6], status=row[7], total_km=row[8])
             contract = RentalContract(
                 tourist=tourist,
                 car=car,
@@ -226,11 +235,8 @@ class SystemOfDb:
             contracts.append(contract)
         connection.close()
         return contracts
-    
-    #@save 
-        # Métodos completados
+
     def countrys_incert(self):
-        """Inserta países adicionales si la tabla está vacía."""
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
         try:
@@ -249,20 +255,22 @@ class SystemOfDb:
             connection.close()
 
     def cars_incrt(self):
-        """Inserta autos adicionales si la tabla está vacía."""
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
         try:
             cursor.execute("SELECT COUNT(*) FROM Car")
             if cursor.fetchone()[0] == 0:
                 cars = [
+                    ("ABC123", "Toyota", "Corolla", "Rojo", "disponible", 0.0),
+                    ("XYZ789", "Honda", "Civic", "Azul", "disponible", 0.0),
+                    ("DEF456", "Ford", "Focus", "Blanco", "disponible", 0.0),
                     ("GHI012", "Volkswagen", "Golf", "Gris", "disponible", 0.0),
                     ("JKL345", "BMW", "Serie 3", "Negro", "disponible", 0.0),
                     ("MNO678", "Mercedes", "C-Class", "Plateado", "disponible", 0.0),
                     ("PQR901", "Audi", "A4", "Rojo", "disponible", 0.0),
                     ("STU234", "Hyundai", "Elantra", "Azul", "disponible", 0.0),
                     ("VWX567", "Nissan", "Sentra", "Blanco", "disponible", 0.0),
-                    ("YZA890", "Chevrolet", "Cruze", "Gris", "disponible", 0.0),
+                    ("YZA890", "Chevrolet", "Cruze", "Gris", "disponible", 0.0)
                 ]
                 cursor.executemany("""
                     INSERT INTO Car (plate, brand, model, color, status, total_km)
@@ -271,7 +279,3 @@ class SystemOfDb:
                 connection.commit()
         finally:
             connection.close()
-
-    def get_all_countrys(self):
-        """Devuelve todos los países registrados (alias del método get_all_countries)."""
-        return self.get_all_countries()
