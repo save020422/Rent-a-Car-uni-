@@ -184,7 +184,7 @@ class SelectablePanel(ft.Container):
 class CountryPanel(SelectablePanel):
     def __init__(self, input_field=None, on_select=None):
         super().__init__(
-            items=COUNTRIES,
+            items=info_manager.countries,
             input_field=input_field,
             on_select=on_select,
             search_label="Buscar país",

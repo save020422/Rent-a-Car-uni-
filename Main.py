@@ -57,9 +57,9 @@ def main(page: ft.Page):
         users_by_country_table=users_by_country_table,
         summary_by_country_table=summary_by_country_table,
         cars_list_table=cars_list_table,
-        tourists_list=SAMPLE_TOURISTS,
-        cars_list=SAMPLE_CARS,
-        contracts_list=contracts
+        tourists_list=info_manager.tourist,
+        cars_list=info_manager.cars,
+        contracts_list=info_manager.contracts
     )
 
     layout = ft.Row(

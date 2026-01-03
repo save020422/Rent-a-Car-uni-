@@ -2,13 +2,10 @@ from SystemOfBd import *
 
 class InfoManager:
 
-    def __init__(self):
+    def __init__(self, SysOfbd = None):
+
     
-        self.countries = ["Argentina", "Brasil", "Chile", "Colombia", "México",
-                        "Perú", "España", "Francia", "Italia", "Alemania",
-                        "Japón", "Corea del Sur", "Estados Unidos", "Canadá", "Australia",
-                        "India", "China", "Rusia", "Sudáfrica", "Egipto", "Portugal", "Suiza",
-                        "Bélgica", "Holanda", "Noruega", "Suecia", "Dinamarca", "Polonia", "Turquía"]
+        self.countries = []
         self.tourist = []
         self.contracts = []
         self.cars = [ Car("ABC123", "Toyota", "Corolla", "Rojo", "disponible"),
@@ -22,9 +19,22 @@ class InfoManager:
                         Car("VWX567", "Nissan", "Sentra", "Blanco", "disponible"),
                         Car("YZA890", "Chevrolet", "Cruze", "Gris", "disponible"),]
         
-    def load_all_data():
-        #esta funcion carga todos los datos de la db a el ifomanager
-        pass
+        self.sys_of_bd = SysOfbd
+        self.load_all_data()
+        
+    #esta funcion carga todos los datos de la db a el ifomanager
+    def load_all_data(self):
+        try:
+            self.countries = self.sys_of_bd.get_all_countrys()
+            print("Si")
 
-    def save_tourist():
+        except:
+            print("no se puedo jefe")
+        
+        
+    def incert_tourist(self,tourist):
+        self.tourist.append(tourist)
         pass 
+
+    def incert_contrats(self,contratcs):
+        self.contracts.append(contratcs)
