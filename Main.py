@@ -15,13 +15,7 @@ def main(page: ft.Page):
         elevation=0
     )
 
-    # ✅ Crear contratos de ejemplo si no hay ninguno
-    #if not contracts:
-        #sample_contracts = create_sample_contracts(SAMPLE_TOURISTS, SAMPLE_CARS, num=6)
-       # contracts.extend(sample_contracts)
-       # print("✅ Contratos de ejemplo creados para testing")
-        #print_all_contracts()
-
+    # Tablas principales
     info_table = InfoTable(tourists_list=info_manager.tourist)
     contracts_table = ContractsTable(contracts_list=info_manager.contracts)
     brand_model_table = BrandModelReportTable(contracts_list=info_manager.contracts, cars_list=info_manager.cars)
@@ -29,13 +23,21 @@ def main(page: ft.Page):
     cars_list_table = CarsListTable(cars_list=info_manager.cars)
     summary_by_country_table = SummaryByCountryTable(contracts_list=info_manager.contracts)
 
+    # Los dos reportes que faltaban
+    cars_situation_table = CarsSituationTable(contracts_list=info_manager.contracts, cars_list=info_manager.cars)
+    defaulters_table = DefaultersTable(contracts_list=info_manager.contracts)
+
+    # Scrolls
     turistas_scroll = ft.Column(controls=[info_table], scroll=ft.ScrollMode.AUTO, expand=True)
     contratos_scroll = ft.Column(controls=[contracts_table], scroll=ft.ScrollMode.AUTO, expand=True)
     marca_modelo_scroll = ft.Column(controls=[brand_model_table], scroll=ft.ScrollMode.AUTO, expand=True)
     usuarios_pais_scroll = ft.Column(controls=[users_by_country_table], scroll=ft.ScrollMode.AUTO, expand=True)
     autos_lista_scroll = ft.Column(controls=[cars_list_table], scroll=ft.ScrollMode.AUTO, expand=True)
     resumen_pais_scroll = ft.Column(controls=[summary_by_country_table], scroll=ft.ScrollMode.AUTO, expand=True)
+    situacion_autos_scroll = ft.Column(controls=[cars_situation_table], scroll=ft.ScrollMode.AUTO, expand=True)
+    incumplidores_scroll = ft.Column(controls=[defaulters_table], scroll=ft.ScrollMode.AUTO, expand=True)
 
+    # Tabs
     tabs = ft.Tabs(
         selected_index=0,
         animation_duration=300,
@@ -45,21 +47,22 @@ def main(page: ft.Page):
             ft.Tab(text="Marca/Modelo", content=ft.Container(content=marca_modelo_scroll, padding=10, expand=True)),
             ft.Tab(text="Usuarios x País", content=ft.Container(content=usuarios_pais_scroll, padding=10, expand=True)),
             ft.Tab(text="Lista de Autos", content=ft.Container(content=autos_lista_scroll, padding=10, expand=True)),
+            ft.Tab(text="Situación Autos", content=ft.Container(content=situacion_autos_scroll, padding=10, expand=True)),
+            ft.Tab(text="Incumplidores", content=ft.Container(content=incumplidores_scroll, padding=10, expand=True)),
             ft.Tab(text="Resumen x País", content=ft.Container(content=resumen_pais_scroll, padding=10, expand=True)),
         ],
         expand=True,
     )
 
     form = Formulary(
-    page=page,
-    info_table=info_table,
-    contracts_table=contracts_table,
-    users_by_country_table=users_by_country_table,
-    summary_by_country_table=summary_by_country_table,
-    cars_list_table=cars_list_table,   # ← este faltaba
-    info_manager=info_manager
+        page=page,
+        info_table=info_table,
+        contracts_table=contracts_table,
+        users_by_country_table=users_by_country_table,
+        summary_by_country_table=summary_by_country_table,
+        cars_list_table=cars_list_table,
+        info_manager=info_manager
     )
-
 
     layout = ft.Row(
         controls=[form, tabs],

@@ -192,6 +192,8 @@ class CountryPanel(SelectablePanel):
         )
 
 
+import flet as ft
+
 class CarPanel(SelectablePanel):
     def __init__(self, items, input_field=None, on_select=None):
         super().__init__(
@@ -201,6 +203,96 @@ class CarPanel(SelectablePanel):
             search_label="Buscar auto",
             item_color=None
         )
+
+    def _filter_and_update(self, query: str):
+        if query:
+            filtered = [item for item in self.all_items if query in str(item).lower()]
+        else:
+            filtered = self.all_items.copy()
+
+        cards = []
+        for car in filtered:
+            display_text = str(car)
+
+            # Colores según estado del auto
+            match car.status:
+                case "disponible":
+                    bg_color = ft.Colors.GREEN_400
+                case "alquilado":
+                    bg_color = ft.Colors.YELLOW_400
+                case "taller":
+                    bg_color = ft.Colors.RED_400
+                case _:
+                    bg_color = ft.Colors.GREY_400
+
+            cards.append(
+                ft.Container(
+                    content=ft.Text(display_text, size=13, weight="bold", color=ft.Colors.WHITE),
+                    padding=10,
+                    margin=ft.margin.only(left=2, right=2),
+                    bgcolor=bg_color,
+                    border_radius=6,
+                    alignment=ft.alignment.center,
+                    on_click=self._on_item_click,
+                    data=car,
+                    tooltip=f"{display_text} ({car.status})"
+                )
+            )
+
+        self.grid_view.controls = cards
+        if self.visible and self.page:
+            self.update()
+import flet as ft
+
+class CarPanel(SelectablePanel):
+    def __init__(self, items, input_field=None, on_select=None):
+        super().__init__(
+            items=items,
+            input_field=input_field,
+            on_select=on_select,
+            search_label="Buscar auto",
+            item_color=None
+        )
+
+    def _filter_and_update(self, query: str):
+        if query:
+            filtered = [item for item in self.all_items if query in str(item).lower()]
+        else:
+            filtered = self.all_items.copy()
+
+        cards = []
+        for car in filtered:
+            display_text = str(car)
+
+            # Colores según estado del auto
+            match car.status:
+                case "disponible":
+                    bg_color = ft.Colors.GREEN_400
+                case "alquilado":
+                    bg_color = ft.Colors.YELLOW_400
+                case "taller":
+                    bg_color = ft.Colors.RED_400
+                case _:
+                    bg_color = ft.Colors.GREY_400
+
+            cards.append(
+                ft.Container(
+                    content=ft.Text(display_text, size=13, weight="bold", color=ft.Colors.WHITE),
+                    padding=10,
+                    margin=ft.margin.only(left=2, right=2),
+                    bgcolor=bg_color,
+                    border_radius=6,
+                    alignment=ft.alignment.center,
+                    on_click=self._on_item_click,
+                    data=car,
+                    tooltip=f"{display_text} ({car.status})"
+                )
+            )
+
+        self.grid_view.controls = cards
+        if self.visible and self.page:
+            self.update()
+
 
 
 # === TABLA AUXILIAR: LISTA DE TURISTAS ===
@@ -402,6 +494,8 @@ class UsersByCountryTable(ft.DataTable):
 
 
 # === REPORTE 2: LISTADO DE AUTOS ===
+import flet as ft
+
 class CarsListTable(ft.DataTable):
     def __init__(self, cars_list, **kwargs):
         columns = [
@@ -410,6 +504,7 @@ class CarsListTable(ft.DataTable):
             ft.DataColumn(ft.Text("Modelo", weight="bold")),
             ft.DataColumn(ft.Text("Color", weight="bold")),
             ft.DataColumn(ft.Text("Km", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Estado", weight="bold")),
         ]
         super().__init__(
             columns=columns,
@@ -425,7 +520,19 @@ class CarsListTable(ft.DataTable):
 
     def populate(self, cars):
         for car in sorted(cars, key=lambda x: x.plate):
-            km = getattr(car, 'total_km', 0)
+            km = getattr(car, "total_km", 0)
+
+            # Colores según estado usando match
+            match car.status:
+                case "disponible":
+                    row_color = ft.Colors.GREEN_100
+                case "alquilado":
+                    row_color = ft.Colors.YELLOW_100
+                case "taller":
+                    row_color = ft.Colors.RED_100
+                case _:
+                    row_color = ft.Colors.GREY_100
+
             self.rows.append(
                 ft.DataRow(
                     cells=[
@@ -434,9 +541,13 @@ class CarsListTable(ft.DataTable):
                         ft.DataCell(ft.Text(car.model, color=ft.Colors.BLACK)),
                         ft.DataCell(ft.Text(car.color, color=ft.Colors.BLACK)),
                         ft.DataCell(ft.Text(str(km), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
-                    ]
+                        ft.DataCell(ft.Text(car.status, color=ft.Colors.BLACK)),
+                    ],
+                    color=row_color  # color de fondo de la fila
                 )
             )
+
+
 
 
 # === REPORTE 7: RESUMEN POR PAÍSES ===
@@ -489,6 +600,54 @@ class SummaryByCountryTable(ft.DataTable):
                     )
                 )
 
+class CarsSituationTable(ft.DataTable):
+    def __init__(self, contracts_list, cars_list, **kwargs):
+        columns = [
+            ft.DataColumn(ft.Text("Placa", weight="bold")),
+            ft.DataColumn(ft.Text("Marca", weight="bold")),
+            ft.DataColumn(ft.Text("Situación", weight="bold")),
+            ft.DataColumn(ft.Text("Fin de contrato", weight="bold")),
+        ]
+        super().__init__(columns=columns, **kwargs)
+        self.populate(contracts_list, cars_list)
+
+    def populate(self, contracts, cars):
+        for car in sorted(cars, key=lambda x: x.plate):
+            contrato = next((c for c in contracts if c.car.plate == car.plate), None)
+            fin_contrato = contrato.end_date.isoformat() if contrato and car.status == "alquilado" else "-"
+            self.rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(car.plate)),
+                        ft.DataCell(ft.Text(car.brand)),
+                        ft.DataCell(ft.Text(car.status)),
+                        ft.DataCell(ft.Text(fin_contrato)),
+                    ]
+                )
+            )
+class DefaultersTable(ft.DataTable):
+    def __init__(self, contracts_list, **kwargs):
+        columns = [
+            ft.DataColumn(ft.Text("Fecha actual", weight="bold")),
+            ft.DataColumn(ft.Text("Turista", weight="bold")),
+            ft.DataColumn(ft.Text("Fin de contrato", weight="bold")),
+        ]
+        super().__init__(columns=columns, **kwargs)
+        self.populate(contracts_list)
+
+    def populate(self, contracts):
+        today = date.today().isoformat()
+        for c in contracts:
+            if c.extension_days > 0 or c.end_date < date.today():
+                self.rows.append(
+                    ft.DataRow(
+                        cells=[
+                            ft.DataCell(ft.Text(today)),
+                            ft.DataCell(ft.Text(c.tourist.name)),
+                            ft.DataCell(ft.Text(c.end_date.isoformat())),
+                        ]
+                    )
+                )
 
 class Formulary(ft.Container):
     def __init__( self, page: ft.Page, info_table: InfoTable, contracts_table: ContractsTable, users_by_country_table: UsersByCountryTable, summary_by_country_table: SummaryByCountryTable,
