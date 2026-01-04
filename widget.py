@@ -91,8 +91,19 @@ class CarPanel(SelectablePanel):
 
 
 # ============================
-# Tablas con filtro on_change y colores
+# Tablas minimalistas con filtro on_change
 # ============================
+
+def _base_table(columns, **kwargs):
+    return ft.DataTable(
+        columns=columns,
+        border=ft.border.all(1, ft.Colors.BLACK),
+        border_radius=6,
+        heading_row_color=ft.Colors.GREY_200,
+        data_row_min_height=32,
+        **kwargs,
+    )
+
 
 class InfoTable(ft.Container):
     def __init__(self, tourists_list, **kwargs):
@@ -100,31 +111,23 @@ class InfoTable(ft.Container):
             label="Filtrar nombre",
             dense=True,
             width=220,
-            border_color=ft.Colors.BLUE_400,
-            focused_border_color=ft.Colors.BLUE_700,
             on_change=self.apply_filter
         )
-        self.table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("Nombre", weight="bold", color=ft.Colors.BLUE_900)),
-                ft.DataColumn(ft.Text("Pasaporte", weight="bold", color=ft.Colors.BLUE_900)),
-                ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.BLUE_900)),
+        self.table = _base_table(
+            [
+                ft.DataColumn(ft.Text("Nombre", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Pasaporte", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.BLACK)),
             ],
-            border=ft.border.all(2, ft.Colors.BLUE_200),
-            border_radius=12,
-            heading_row_color=ft.Colors.BLUE_50,
-            column_spacing=14,
-            data_row_min_height=40,
             **kwargs,
         )
         self.original_data = list(tourists_list)
         self.populate(tourists_list)
         super().__init__(
             content=ft.Column([self.search_field, self.table], spacing=8),
-            padding=12,
-            bgcolor=ft.Colors.BLUE_50,
-            border=ft.border.all(2, ft.Colors.BLUE_200),
-            border_radius=12,
+            padding=8,
+            border=ft.border.all(1, ft.Colors.BLACK),
+            border_radius=6,
         )
 
     def populate(self, tourists_list):
@@ -132,9 +135,9 @@ class InfoTable(ft.Container):
         for t in tourists_list:
             self.table.rows.append(
                 ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(t.name)),
-                    ft.DataCell(ft.Text(t.passport_number)),
-                    ft.DataCell(ft.Text(t.country)),
+                    ft.DataCell(ft.Text(t.name, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(t.passport_number, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(t.country, color=ft.Colors.BLACK)),
                 ])
             )
 
@@ -151,36 +154,28 @@ class ContractsTable(ft.Container):
             label="Filtrar turista",
             dense=True,
             width=220,
-            border_color=ft.Colors.GREEN_400,
-            focused_border_color=ft.Colors.GREEN_700,
             on_change=self.apply_filter
         )
-        self.table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("Turista", weight="bold", color=ft.Colors.GREEN_900)),
-                ft.DataColumn(ft.Text("Auto", weight="bold", color=ft.Colors.GREEN_900)),
-                ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.GREEN_900)),
-                ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.GREEN_900)),
-                ft.DataColumn(ft.Text("Pago", weight="bold", color=ft.Colors.GREEN_900)),
-                ft.DataColumn(ft.Text("Inicio", weight="bold", color=ft.Colors.GREEN_900)),
-                ft.DataColumn(ft.Text("Fin", weight="bold", color=ft.Colors.GREEN_900)),
-                ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.GREEN_900)),
+        self.table = _base_table(
+            [
+                ft.DataColumn(ft.Text("Turista", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Auto", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Pago", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Inicio", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Fin", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.BLACK)),
             ],
-            border=ft.border.all(2, ft.Colors.GREEN_300),
-            border_radius=12,
-            heading_row_color=ft.Colors.GREEN_50,
-            column_spacing=12,
-            data_row_min_height=40,
             **kwargs,
         )
         self.original_data = list(contracts_list)
         self.populate(contracts_list)
         super().__init__(
             content=ft.Column([self.search_field, self.table], spacing=8),
-            padding=12,
-            bgcolor=ft.Colors.GREEN_50,
-            border=ft.border.all(2, ft.Colors.GREEN_300),
-            border_radius=12,
+            padding=8,
+            border=ft.border.all(1, ft.Colors.BLACK),
+            border_radius=6,
         )
 
     def populate(self, contracts_list):
@@ -188,14 +183,14 @@ class ContractsTable(ft.Container):
         for c in contracts_list:
             self.table.rows.append(
                 ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(c.tourist.name)),
-                    ft.DataCell(ft.Text(c.car.plate)),
-                    ft.DataCell(ft.Text(c.car.brand)),
-                    ft.DataCell(ft.Text(c.car.model)),
-                    ft.DataCell(ft.Text(c.payment_method)),
-                    ft.DataCell(ft.Text(str(c.start_date))),
-                    ft.DataCell(ft.Text(str(c.end_date))),
-                    ft.DataCell(ft.Text(f"${c.total_amount:.2f}")),
+                    ft.DataCell(ft.Text(c.tourist.name, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(c.car.plate, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(c.car.brand, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(c.car.model, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(c.payment_method, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(str(c.start_date), color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(str(c.end_date), color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(f"${c.total_amount:.2f}", color=ft.Colors.BLACK)),
                 ])
             )
 
@@ -212,33 +207,25 @@ class CarsListTable(ft.Container):
             label="Filtrar placa",
             dense=True,
             width=220,
-            border_color=ft.Colors.ORANGE_400,
-            focused_border_color=ft.Colors.ORANGE_700,
             on_change=self.apply_filter
         )
-        self.table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("Placa", weight="bold", color=ft.Colors.ORANGE_900)),
-                ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.ORANGE_900)),
-                ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.ORANGE_900)),
-                ft.DataColumn(ft.Text("Color", weight="bold", color=ft.Colors.ORANGE_900)),
-                ft.DataColumn(ft.Text("Estado", weight="bold", color=ft.Colors.ORANGE_900)),
+        self.table = _base_table(
+            [
+                ft.DataColumn(ft.Text("Placa", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Color", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Estado", weight="bold", color=ft.Colors.BLACK)),
             ],
-            border=ft.border.all(2, ft.Colors.ORANGE_300),
-            border_radius=12,
-            heading_row_color=ft.Colors.ORANGE_50,
-            column_spacing=12,
-            data_row_min_height=40,
             **kwargs,
         )
         self.original_data = list(cars_list)
         self.populate(cars_list)
         super().__init__(
             content=ft.Column([self.search_field, self.table], spacing=8),
-            padding=12,
-            bgcolor=ft.Colors.ORANGE_50,
-            border=ft.border.all(2, ft.Colors.ORANGE_300),
-            border_radius=12,
+            padding=8,
+            border=ft.border.all(1, ft.Colors.BLACK),
+            border_radius=6,
         )
 
     def populate(self, cars_list):
@@ -246,11 +233,11 @@ class CarsListTable(ft.Container):
         for car in cars_list:
             self.table.rows.append(
                 ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(car.plate)),
-                    ft.DataCell(ft.Text(car.brand)),
-                    ft.DataCell(ft.Text(car.model)),
-                    ft.DataCell(ft.Text(car.color)),
-                    ft.DataCell(ft.Text(car.status)),
+                    ft.DataCell(ft.Text(car.plate, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(car.brand, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(car.model, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(car.color, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(car.status, color=ft.Colors.BLACK)),
                 ])
             )
 
@@ -267,26 +254,19 @@ class BrandModelReportTable(ft.Container):
             label="Filtrar marca/modelo",
             dense=True,
             width=240,
-            border_color=ft.Colors.PURPLE_400,
-            focused_border_color=ft.Colors.PURPLE_700,
             on_change=self.apply_filter
         )
-        self.table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.PURPLE_900)),
-                ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.PURPLE_900)),
-                ft.DataColumn(ft.Text("Autos", weight="bold", color=ft.Colors.PURPLE_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Días", weight="bold", color=ft.Colors.PURPLE_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Efectivo", weight="bold", color=ft.Colors.PURPLE_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Cheque", weight="bold", color=ft.Colors.PURPLE_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Tarjeta", weight="bold", color=ft.Colors.PURPLE_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.PURPLE_900, text_align=ft.TextAlign.RIGHT)),
+        self.table = _base_table(
+            [
+                ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Autos", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Días", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Efectivo", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Cheque", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Tarjeta", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
             ],
-            border=ft.border.all(2, ft.Colors.PURPLE_300),
-            border_radius=12,
-            heading_row_color=ft.Colors.PURPLE_50,
-            column_spacing=10,
-            data_row_min_height=40,
             **kwargs,
         )
         self.original_contracts = list(contracts_list)
@@ -294,10 +274,9 @@ class BrandModelReportTable(ft.Container):
         self.populate(contracts_list, cars_list)
         super().__init__(
             content=ft.Column([self.search_field, self.table], spacing=8),
-            padding=12,
-            bgcolor=ft.Colors.PURPLE_50,
-            border=ft.border.all(2, ft.Colors.PURPLE_300),
-            border_radius=12,
+            padding=8,
+            border=ft.border.all(1, ft.Colors.BLACK),
+            border_radius=6,
         )
 
     def populate(self, contracts, cars):
@@ -306,9 +285,11 @@ class BrandModelReportTable(ft.Container):
         for c in contracts:
             key = (c.car.brand, c.car.model)
             by_brand_model[key].append(c)
+
         car_count = defaultdict(int)
         for car in cars:
             car_count[(car.brand, car.model)] += 1
+
         total_general = 0.0
         for (brand, model), contract_list in sorted(by_brand_model.items()):
             dias = sum((c.end_date - c.start_date).days + 1 for c in contract_list)
@@ -318,31 +299,33 @@ class BrandModelReportTable(ft.Container):
             tarjeta = sum(c.total_amount for c in contract_list if c.payment_method == "tarjeta de crédito")
             subtotal = efectivo + cheque + tarjeta
             total_general += subtotal
+
             self.table.rows.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(brand)),
-                        ft.DataCell(ft.Text(model)),
-                        ft.DataCell(ft.Text(str(count), text_align=ft.TextAlign.RIGHT)),
-                        ft.DataCell(ft.Text(str(dias), text_align=ft.TextAlign.RIGHT)),
-                        ft.DataCell(ft.Text(f"${efectivo:.2f}", text_align=ft.TextAlign.RIGHT)),
-                        ft.DataCell(ft.Text(f"${cheque:.2f}", text_align=ft.TextAlign.RIGHT)),
-                        ft.DataCell(ft.Text(f"${tarjeta:.2f}", text_align=ft.TextAlign.RIGHT)),
-                        ft.DataCell(ft.Text(f"${subtotal:.2f}", text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(brand, color=ft.Colors.BLACK)),
+                        ft.DataCell(ft.Text(model, color=ft.Colors.BLACK)),
+                        ft.DataCell(ft.Text(str(count), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(str(dias), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${efectivo:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${cheque:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${tarjeta:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(f"${subtotal:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
                     ]
                 )
             )
+
         self.table.rows.append(
             ft.DataRow(
                 cells=[
-                    ft.DataCell(ft.Text("TOTAL GENERAL", weight="bold", color=ft.Colors.PURPLE_800)),
+                    ft.DataCell(ft.Text("TOTAL GENERAL", weight="bold", color=ft.Colors.BLACK)),
                     ft.DataCell(ft.Text("")),
                     ft.DataCell(ft.Text("")),
                     ft.DataCell(ft.Text("")),
                     ft.DataCell(ft.Text("")),
                     ft.DataCell(ft.Text("")),
                     ft.DataCell(ft.Text("")),
-                    ft.DataCell(ft.Text(f"${total_general:.2f}", weight="bold", color=ft.Colors.PURPLE_800, text_align=ft.TextAlign.RIGHT)),
+                    ft.DataCell(ft.Text(f"${total_general:.2f}", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
                 ]
             )
         )
@@ -363,30 +346,22 @@ class UsersByCountryTable(ft.Container):
             label="Filtrar país",
             dense=True,
             width=220,
-            border_color=ft.Colors.TEAL_400,
-            focused_border_color=ft.Colors.TEAL_700,
             on_change=self.apply_filter
         )
-        self.table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.TEAL_900)),
-                ft.DataColumn(ft.Text("Usuarios", weight="bold", color=ft.Colors.TEAL_900, text_align=ft.TextAlign.RIGHT)),
+        self.table = _base_table(
+            [
+                ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Usuarios", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
             ],
-            border=ft.border.all(2, ft.Colors.TEAL_300),
-            border_radius=12,
-            heading_row_color=ft.Colors.TEAL_50,
-            column_spacing=12,
-            data_row_min_height=40,
             **kwargs,
         )
         self.original_contracts = list(contracts_list)
         self.populate(contracts_list)
         super().__init__(
             content=ft.Column([self.search_field, self.table], spacing=8),
-            padding=12,
-            bgcolor=ft.Colors.TEAL_50,
-            border=ft.border.all(2, ft.Colors.TEAL_300),
-            border_radius=12,
+            padding=8,
+            border=ft.border.all(1, ft.Colors.BLACK),
+            border_radius=6,
         )
 
     def populate(self, contracts):
@@ -399,8 +374,8 @@ class UsersByCountryTable(ft.Container):
             self.table.rows.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(country)),
-                        ft.DataCell(ft.Text(str(count), text_align=ft.TextAlign.RIGHT)),
+                        ft.DataCell(ft.Text(country, color=ft.Colors.BLACK)),
+                        ft.DataCell(ft.Text(str(count), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
                     ]
                 )
             )
@@ -418,34 +393,26 @@ class SummaryByCountryTable(ft.Container):
             label="Filtrar país",
             dense=True,
             width=240,
-            border_color=ft.Colors.INDIGO_400,
-            focused_border_color=ft.Colors.INDIGO_700,
             on_change=self.apply_filter
         )
-        self.table = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.INDIGO_900)),
-                ft.DataColumn(ft.Text("Marca-Modelo", weight="bold", color=ft.Colors.INDIGO_900)),
-                ft.DataColumn(ft.Text("Días", weight="bold", color=ft.Colors.INDIGO_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Prórroga", weight="bold", color=ft.Colors.INDIGO_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Efectivo", weight="bold", color=ft.Colors.INDIGO_900, text_align=ft.TextAlign.RIGHT)),
-                ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.INDIGO_900, text_align=ft.TextAlign.RIGHT)),
+        self.table = _base_table(
+            [
+                ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Marca-Modelo", weight="bold", color=ft.Colors.BLACK)),
+                ft.DataColumn(ft.Text("Días", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Prórroga", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Efectivo", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
             ],
-            border=ft.border.all(2, ft.Colors.INDIGO_300),
-            border_radius=12,
-            heading_row_color=ft.Colors.INDIGO_50,
-            column_spacing=12,
-            data_row_min_height=40,
             **kwargs,
         )
         self.original_contracts = list(contracts_list)
         self.populate(contracts_list)
         super().__init__(
             content=ft.Column([self.search_field, self.table], spacing=8),
-            padding=12,
-            bgcolor=ft.Colors.INDIGO_50,
-            border=ft.border.all(2, ft.Colors.INDIGO_300),
-            border_radius=12,
+            padding=8,
+            border=ft.border.all(1, ft.Colors.BLACK),
+            border_radius=6,
         )
 
     def populate(self, contracts):
@@ -462,12 +429,12 @@ class SummaryByCountryTable(ft.Container):
                 self.table.rows.append(
                     ft.DataRow(
                         cells=[
-                            ft.DataCell(ft.Text(country)),
-                            ft.DataCell(ft.Text(model_key)),
-                            ft.DataCell(ft.Text(str(dias), text_align=ft.TextAlign.RIGHT)),
-                            ft.DataCell(ft.Text(str(extension), text_align=ft.TextAlign.RIGHT)),
-                            ft.DataCell(ft.Text(f"${efectivo:.2f}", text_align=ft.TextAlign.RIGHT)),
-                            ft.DataCell(ft.Text(f"${total:.2f}", text_align=ft.TextAlign.RIGHT)),
+                            ft.DataCell(ft.Text(country, color=ft.Colors.BLACK)),
+                            ft.DataCell(ft.Text(model_key, color=ft.Colors.BLACK)),
+                            ft.DataCell(ft.Text(str(dias), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                            ft.DataCell(ft.Text(str(extension), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                            ft.DataCell(ft.Text(f"${efectivo:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
+                            ft.DataCell(ft.Text(f"${total:.2f}", color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
                         ]
                     )
                 )
@@ -550,29 +517,26 @@ class Formulary(ft.Container):
         self.car_panel.visible = False
 
         self.form_column = ft.Column(
-    controls=[
-        ft.Text("Formulario de contrato", weight="bold"),
-        ft.IconButton(ft.Icons.CLOSE, tooltip="Colapsar", on_click=self._toggle_form),
-
-        # Campos uno debajo del otro
-        self.name_field,
-        self.passport_field,
-        self.country_input,
-        self.country_panel_btn,
-        self.country_panel,
-        self.car_input,
-        self.car_panel_btn,
-        self.car_panel,
-        self.rental_days_field,
-        self.extension_field,
-        self.payment_dropdown,
-        self.driver_switch,
-        self.add_btn,
-    ],
-    spacing=8,
-    scroll=ft.ScrollMode.AUTO,   # 👈 mantiene el scroll vertical
-)
-
+            controls=[
+                ft.Text("Formulario de contrato", weight="bold"),
+                ft.IconButton(ft.Icons.CLOSE, tooltip="Colapsar", on_click=self._toggle_form),
+                self.name_field,
+                self.passport_field,
+                self.country_input,
+                self.country_panel_btn,
+                self.country_panel,
+                self.car_input,
+                self.car_panel_btn,
+                self.car_panel,
+                self.rental_days_field,
+                self.extension_field,
+                self.payment_dropdown,
+                self.driver_switch,
+                self.add_btn,
+            ],
+            spacing=8,
+            scroll=ft.ScrollMode.AUTO,
+        )
 
         super().__init__(
             content=self.expand_button,
@@ -597,7 +561,6 @@ class Formulary(ft.Container):
             self.padding = 0
             self.border = None
             self.bgcolor = None
-            # cerrar paneles si estaban abiertos
             self.country_panel.visible = False
             self.car_panel.visible = False
         self.update()
@@ -682,7 +645,6 @@ class Formulary(ft.Container):
             self.info_manager.incert_contrats(contract)
             car_obj.status = "alquilado"
 
-            # Actualiza datasets y vistas
             self.info_table.original_data.append(tourist)
             self.info_table.populate(self.info_table.original_data)
 
@@ -695,7 +657,6 @@ class Formulary(ft.Container):
 
             self.page.update()
 
-            # limpiar campos
             self.name_field.value = ""
             self.passport_field.value = ""
             self.country_input.value = ""
