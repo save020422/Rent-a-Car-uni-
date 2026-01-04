@@ -1,26 +1,16 @@
 import flet as ft
 from datetime import date, timedelta
 from collections import defaultdict
-from init_ import * 
-
-
-# ================================
-# CLASES DE DATOS (reemplazan dataAbstration.py)
-# ================================
-
-# CONFIGURACIÓN Y DATOS DE EJEMPLO
-# ================================
+from init_ import *
 
 DAILY_RATE = 50.0
 EXTENSION_RATE = 70.0
 VALID_PAYMENT_METHODS = {"efectivo", "cheque", "tarjeta de crédito"}
 
 COUNTRIES = [
-    "Argentina", "Brasil", "Chile", "Colombia", "México",
-    "Perú", "España", "Francia", "Italia", "Alemania",
-    "Japón", "Corea del Sur", "Estados Unidos", "Canadá", "Australia",
-    "India", "China", "Rusia", "Sudáfrica", "Egipto", "Portugal", "Suiza",
-    "Bélgica", "Holanda", "Noruega", "Suecia", "Dinamarca", "Polonia", "Turquía"
+    "Argentina", "Brasil", "Chile", "Colombia", "México", "Perú", "España", "Francia", "Italia", "Alemania",
+    "Japón", "Corea del Sur", "Estados Unidos", "Canadá", "Australia", "India", "China", "Rusia", "Sudáfrica",
+    "Egipto", "Portugal", "Suiza", "Bélgica", "Holanda", "Noruega", "Suecia", "Dinamarca", "Polonia", "Turquía"
 ]
 
 SAMPLE_CARS = [
@@ -53,9 +43,9 @@ contracts = []
 
 
 def print_all_contracts():
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"📋 LISTA ACTUAL DE CONTRATOS ({len(contracts)} en total)")
-    print("="*60)
+    print("=" * 60)
     if not contracts:
         print("  (No hay contratos registrados)")
     else:
@@ -64,23 +54,19 @@ def print_all_contracts():
             if c.extension_days > 0:
                 resumen += f" (Prórroga: {c.extension_days}d)"
             print(f"  {resumen}")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 def create_sample_contracts(tourists, cars, num=5):
-    """Crea contratos de ejemplo para testing"""
     sample_contracts = []
     today = date.today()
-    
     for i in range(min(num, len(tourists), len(cars))):
         if cars[i].status != "disponible":
             continue
-            
         tourist = tourists[i]
         car = cars[i]
         start = today - timedelta(days=10)
         end = start + timedelta(days=3)
-        
         contract = RentalContract(
             tourist=tourist,
             car=car,
@@ -88,12 +74,10 @@ def create_sample_contracts(tourists, cars, num=5):
             end_date=end,
             extension_days=0 if i % 3 != 0 else 2,
             with_driver=(i % 2 == 0),
-            payment_method="efectivo" if i % 3 == 0 else "tarjeta de crédito"
+            payment_method="efectivo" if i % 3 == 0 else "tarjeta de crédito",
         )
-        
         sample_contracts.append(contract)
         car.status = "alquilado"
-    
     return sample_contracts
 
 
@@ -109,32 +93,22 @@ class SelectablePanel(ft.Container):
             label=search_label,
             hint_text="Escribe para filtrar...",
             dense=True,
-            content_padding=6,
-            on_change=self._on_search,
-            width=220
+            content_padding=8,
+            border_radius=8,
+            border_color=ft.Colors.BLUE_300,
+            focused_border_color=ft.Colors.BLUE_700,
+            width=240,
         )
 
-        self.grid_view = ft.GridView(
-            max_extent=100,
-            spacing=8,
-            run_spacing=8,
-            padding=10,
-            height=260
-        )
+        self.grid_view = ft.GridView(max_extent=140, spacing=8, run_spacing=8, padding=10, height=280)
 
         self._filter_and_update("")
 
-        content = ft.Column(
-            controls=[self.search_field, self.grid_view],
-            spacing=10,
-            tight=True
-        )
-
-        self.content = content
+        self.content = ft.Column(controls=[self.search_field, self.grid_view], spacing=10, tight=True)
         self.padding = 12
         self.bgcolor = ft.Colors.GREY_50
-        self.border = ft.border.all(1, ft.Colors.GREY_400)
-        self.border_radius = 8
+        self.border = ft.border.all(1, ft.Colors.GREY_300)
+        self.border_radius = 10
         self.visible = False
 
     def _on_search(self, e):
@@ -142,30 +116,22 @@ class SelectablePanel(ft.Container):
         self._filter_and_update(query)
 
     def _filter_and_update(self, query: str):
-        if query:
-            filtered = [item for item in self.all_items if query in str(item).lower()]
-        else:
-            filtered = self.all_items.copy()
-
+        filtered = [item for item in self.all_items if query in str(item).lower()] if query else self.all_items.copy()
         cards = []
         for item in filtered:
             display_text = str(item)
-            if hasattr(item, 'get_status_color'):
-                bg_color = item.get_status_color()
-            else:
-                bg_color = self.default_item_color or ft.Colors.BLUE_700
-
+            bg_color = item.get_status_color() if hasattr(item, "get_status_color") else (self.default_item_color or ft.Colors.BLUE_600)
             cards.append(
                 ft.Container(
                     content=ft.Text(display_text, size=13, weight="bold", color=ft.Colors.WHITE),
                     padding=10,
-                    margin=ft.margin.only(left=2, right=2),
+                    margin=ft.margin.symmetric(horizontal=2),
                     bgcolor=bg_color,
-                    border_radius=6,
+                    border_radius=8,
                     alignment=ft.alignment.center,
                     on_click=self._on_item_click,
                     data=item,
-                    tooltip=f"{display_text} ({item.status})" if hasattr(item, 'status') else display_text
+                    tooltip=f"{display_text} ({getattr(item, 'status', '')})" if hasattr(item, "status") else display_text,
                 )
             )
         self.grid_view.controls = cards
@@ -188,128 +154,126 @@ class CountryPanel(SelectablePanel):
             input_field=input_field,
             on_select=on_select,
             search_label="Buscar país",
-            item_color=ft.Colors.BLUE_700
+            item_color=ft.Colors.BLUE_700,
         )
 
 
 class CarPanel(SelectablePanel):
     def __init__(self, items, input_field=None, on_select=None):
-        super().__init__(
-            items=items,
-            input_field=input_field,
-            on_select=on_select,
-            search_label="Buscar auto",
-            item_color=None
-        )
+        super().__init__(items=items, input_field=input_field, on_select=on_select, search_label="Buscar auto", item_color=None)
 
 
-# === TABLA AUXILIAR: LISTA DE TURISTAS ===
 class InfoTable(ft.DataTable):
     def __init__(self, tourists_list, **kwargs):
         columns = [
-            ft.DataColumn(ft.Text("Nombre", weight="bold")),
-            ft.DataColumn(ft.Text("Pasaporte", weight="bold")),
-            ft.DataColumn(ft.Text("País", weight="bold"))
+            ft.DataColumn(ft.Text("Nombre", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Pasaporte", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.BLUE_900)),
         ]
         super().__init__(
             columns=columns,
-            border=ft.border.all(1, ft.Colors.GREY),
-            border_radius=15,
-            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
-            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=12,
+            heading_row_color=ft.Colors.BLUE_50,
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
             divider_thickness=0,
-            column_spacing=20,
-            **kwargs
+            column_spacing=14,
+            data_row_min_height=40,
+            **kwargs,
         )
-
         for t in tourists_list:
             self.add_tourist(t.name, t.passport_number, t.country)
 
     def add_tourist(self, name: str, passport: str, country: str):
-        new_row = ft.DataRow(
-            cells=[
-                ft.DataCell(ft.Text(name, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(passport, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(country, color=ft.Colors.BLACK))
-            ]
+        self.rows.append(
+            ft.DataRow(
+                cells=[
+                    ft.DataCell(ft.Text(name, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(passport, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(country, color=ft.Colors.BLACK)),
+                ]
+            )
         )
-        self.rows.append(new_row)
 
 
-# === REPORTE 4: LISTADO DE CONTRATOS ===
 class ContractsTable(ft.DataTable):
     def __init__(self, contracts_list, **kwargs):
         columns = [
-            ft.DataColumn(ft.Text("Turista", weight="bold")),
-            ft.DataColumn(ft.Text("Auto", weight="bold")),
-            ft.DataColumn(ft.Text("Marca", weight="bold")),
-            ft.DataColumn(ft.Text("Modelo", weight="bold")),
-            ft.DataColumn(ft.Text("Pago", weight="bold")),
-            ft.DataColumn(ft.Text("Inicio", weight="bold")),
-            ft.DataColumn(ft.Text("Fin", weight="bold")),
-            ft.DataColumn(ft.Text("Prórroga", weight="bold")),
-            ft.DataColumn(ft.Text("Chofer", weight="bold")),
-            ft.DataColumn(ft.Text("Total", weight="bold")),
+            ft.DataColumn(ft.Text("Turista", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Auto", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Pago", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Inicio", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Fin", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Prórroga", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Chofer", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.BLUE_900)),
         ]
         super().__init__(
             columns=columns,
-            border=ft.border.all(1, ft.Colors.GREY),
-            border_radius=15,
-            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
-            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=12,
+            heading_row_color=ft.Colors.BLUE_50,
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
             divider_thickness=0,
             column_spacing=10,
-            **kwargs
+            data_row_min_height=40,
+            **kwargs,
         )
-
         for c in contracts_list:
             self.add_contract(c)
 
     def add_contract(self, contract):
         chofer = "Sí" if contract.with_driver else "No"
-        row = ft.DataRow(
-            cells=[
-                ft.DataCell(ft.Text(contract.tourist.name, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(contract.car.plate, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(contract.car.brand, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(contract.car.model, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(contract.payment_method, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(str(contract.start_date), color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(str(contract.end_date), color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(str(contract.extension_days), color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(chofer, color=ft.Colors.BLACK)),
-                ft.DataCell(ft.Text(f"${contract.total_amount:.2f}", color=ft.Colors.BLACK)),
-            ]
+        self.rows.append(
+            ft.DataRow(
+                cells=[
+                    ft.DataCell(ft.Text(contract.tourist.name, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(contract.car.plate, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(contract.car.brand, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(contract.car.model, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(contract.payment_method, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(str(contract.start_date), color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(str(contract.end_date), color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(str(contract.extension_days), color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(chofer, color=ft.Colors.BLACK)),
+                    ft.DataCell(ft.Text(f"${contract.total_amount:.2f}", color=ft.Colors.BLACK)),
+                ]
+            )
         )
-        self.rows.append(row)
 
 
-# === REPORTE 6: RESUMEN POR MARCAS Y MODELOS ===
 class BrandModelReportTable(ft.DataTable):
     def __init__(self, contracts_list, cars_list, **kwargs):
         columns = [
-            ft.DataColumn(ft.Text("Marca", weight="bold")),
-            ft.DataColumn(ft.Text("Modelo", weight="bold")),
-            ft.DataColumn(ft.Text("Autos", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Días", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Efectivo", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Cheque", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Tarjeta", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Total", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Autos", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Días", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Efectivo", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Cheque", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Tarjeta", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
         ]
         super().__init__(
             columns=columns,
-            border=ft.border.all(1, ft.Colors.GREY),
-            border_radius=15,
-            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
-            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=12,
+            heading_row_color=ft.Colors.BLUE_50,
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
             divider_thickness=0,
             column_spacing=10,
-            **kwargs
+            data_row_min_height=40,
+            **kwargs,
         )
         self.populate(contracts_list, cars_list)
 
     def populate(self, contracts, cars):
+        self.rows.clear()
         by_brand_model = defaultdict(list)
         for c in contracts:
             key = (c.car.brand, c.car.model)
@@ -324,7 +288,6 @@ class BrandModelReportTable(ft.DataTable):
         for (brand, model), contract_list in sorted(by_brand_model.items()):
             dias = sum((c.end_date - c.start_date).days + 1 for c in contract_list)
             count = car_count.get((brand, model), 0)
-            
             efectivo = sum(c.total_amount for c in contract_list if c.payment_method == "efectivo")
             cheque = sum(c.total_amount for c in contract_list if c.payment_method == "cheque")
             tarjeta = sum(c.total_amount for c in contract_list if c.payment_method == "tarjeta de crédito")
@@ -362,33 +325,31 @@ class BrandModelReportTable(ft.DataTable):
         )
 
 
-# === REPORTE 1: LISTADO DE USUARIOS POR PAÍS ===
 class UsersByCountryTable(ft.DataTable):
-    """Reporte 1: Listado de usuarios por país"""
     def __init__(self, contracts_list, **kwargs):
         columns = [
-            ft.DataColumn(ft.Text("País", weight="bold")),
-            ft.DataColumn(ft.Text("Usuarios", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Usuarios", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
         ]
         super().__init__(
             columns=columns,
-            border=ft.border.all(1, ft.Colors.GREY),
-            border_radius=15,
-            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
-            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=12,
+            heading_row_color=ft.Colors.BLUE_50,
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
             divider_thickness=0,
-            column_spacing=10,
-            **kwargs
+            column_spacing=12,
+            data_row_min_height=40,
+            **kwargs,
         )
         self.populate(contracts_list)
 
     def populate(self, contracts):
+        self.rows.clear()
         unique_tourists_by_country = defaultdict(set)
         for c in contracts:
-            country = c.tourist.country
-            passport = c.tourist.passport_number
-            unique_tourists_by_country[country].add(passport)
-
+            unique_tourists_by_country[c.tourist.country].add(c.tourist.passport_number)
         for country in sorted(unique_tourists_by_country.keys()):
             count = len(unique_tourists_by_country[country])
             self.rows.append(
@@ -401,31 +362,34 @@ class UsersByCountryTable(ft.DataTable):
             )
 
 
-# === REPORTE 2: LISTADO DE AUTOS ===
 class CarsListTable(ft.DataTable):
     def __init__(self, cars_list, **kwargs):
         columns = [
-            ft.DataColumn(ft.Text("Placa", weight="bold")),
-            ft.DataColumn(ft.Text("Marca", weight="bold")),
-            ft.DataColumn(ft.Text("Modelo", weight="bold")),
-            ft.DataColumn(ft.Text("Color", weight="bold")),
-            ft.DataColumn(ft.Text("Km", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Placa", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Marca", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Modelo", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Color", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Km", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Estado", weight="bold", color=ft.Colors.BLUE_900)),
         ]
         super().__init__(
             columns=columns,
-            border=ft.border.all(1, ft.Colors.GREY),
-            border_radius=15,
-            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
-            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=12,
+            heading_row_color=ft.Colors.BLUE_50,
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
             divider_thickness=0,
-            column_spacing=10,
-            **kwargs
+            column_spacing=12,
+            data_row_min_height=40,
+            **kwargs,
         )
         self.populate(cars_list)
 
     def populate(self, cars):
-        for car in sorted(cars, key=lambda x: x.plate):
-            km = getattr(car, 'total_km', 0)
+        self.rows.clear()
+        for i, car in enumerate(sorted(cars, key=lambda x: x.plate)):
+            km = getattr(car, "total_km", 0)
             self.rows.append(
                 ft.DataRow(
                     cells=[
@@ -434,52 +398,52 @@ class CarsListTable(ft.DataTable):
                         ft.DataCell(ft.Text(car.model, color=ft.Colors.BLACK)),
                         ft.DataCell(ft.Text(car.color, color=ft.Colors.BLACK)),
                         ft.DataCell(ft.Text(str(km), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
-                    ]
+                        ft.DataCell(ft.Text(car.status, color=ft.Colors.BLACK)),
+                    ],
+                    color=ft.Colors.WHITE if i % 2 else ft.Colors.BLUE_50,
                 )
             )
 
 
-# === REPORTE 7: RESUMEN POR PAÍSES ===
 class SummaryByCountryTable(ft.DataTable):
     def __init__(self, contracts_list, **kwargs):
         columns = [
-            ft.DataColumn(ft.Text("País", weight="bold")),
-            ft.DataColumn(ft.Text("Marca-Modelo", weight="bold")),
-            ft.DataColumn(ft.Text("Días", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Prórroga", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Efectivo", weight="bold", text_align=ft.TextAlign.RIGHT)),
-            ft.DataColumn(ft.Text("Total", weight="bold", text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("País", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Marca-Modelo", weight="bold", color=ft.Colors.BLUE_900)),
+            ft.DataColumn(ft.Text("Días", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Prórroga", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Efectivo", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
+            ft.DataColumn(ft.Text("Total", weight="bold", color=ft.Colors.BLUE_900, text_align=ft.TextAlign.RIGHT)),
         ]
         super().__init__(
             columns=columns,
-            border=ft.border.all(1, ft.Colors.GREY),
-            border_radius=15,
-            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY),
-            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=12,
+            heading_row_color=ft.Colors.BLUE_50,
+            horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
+            vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_200),
             divider_thickness=0,
-            column_spacing=10,
-            **kwargs
+            column_spacing=12,
+            data_row_min_height=40,
+            **kwargs,
         )
         self.populate(contracts_list)
 
     def populate(self, contracts):
+        self.rows.clear()
         by_country_model = defaultdict(lambda: defaultdict(list))
         for c in contracts:
-            country = c.tourist.country          # ← Nombre del país
-            model_key = f"{c.car.brand} {c.car.model}"
-            by_country_model[country][model_key].append(c)
-
+            by_country_model[c.tourist.country][f"{c.car.brand} {c.car.model}"].append(c)
         for country in sorted(by_country_model.keys()):
             for model_key, contract_list in sorted(by_country_model[country].items()):
                 dias = sum((c.end_date - c.start_date).days + 1 for c in contract_list)
                 extension = sum(c.extension_days for c in contract_list)
                 efectivo = sum(c.total_amount for c in contract_list if c.payment_method == "efectivo")
                 total = sum(c.total_amount for c in contract_list)
-
                 self.rows.append(
                     ft.DataRow(
                         cells=[
-                            ft.DataCell(ft.Text(country, color=ft.Colors.BLACK)),        # ← Nombre del país
+                            ft.DataCell(ft.Text(country, color=ft.Colors.BLACK)),
                             ft.DataCell(ft.Text(model_key, color=ft.Colors.BLACK)),
                             ft.DataCell(ft.Text(str(dias), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
                             ft.DataCell(ft.Text(str(extension), color=ft.Colors.BLACK, text_align=ft.TextAlign.RIGHT)),
@@ -489,100 +453,61 @@ class SummaryByCountryTable(ft.DataTable):
                     )
                 )
 
-
 class Formulary(ft.Container):
-    def __init__( self, page: ft.Page, info_table: InfoTable, contracts_table: ContractsTable, users_by_country_table: UsersByCountryTable, summary_by_country_table: SummaryByCountryTable,
-                  cars_list_table: CarsListTable, info_manager:InfoManager):
+    def __init__(self, page: ft.Page,
+                 info_table: InfoTable,
+                 contracts_table: ContractsTable,
+                 users_by_country_table: UsersByCountryTable,
+                 summary_by_country_table: SummaryByCountryTable,
+                 cars_list_table: CarsListTable,
+                 info_manager: InfoManager):
         self.page = page
         self.info_table = info_table
         self.contracts_table = contracts_table
         self.users_by_country_table = users_by_country_table
         self.summary_by_country_table = summary_by_country_table
         self.cars_list_table = cars_list_table
-        self.info_manager = info_manager 
-        self.is_country_panel_open = False
-        self.is_car_panel_open = False
-        self.selected_car = None
-        self.is_form_expanded = True
+        self.info_manager = info_manager
 
-        #inputs
-        self.name_field = ft.TextField(label="Nombre", dense=True, content_padding=5)
-        self.passport_field = ft.TextField(label="Pasaporte", dense=True, content_padding=5)
-        self.country_input = ft.TextField(
-            label="País", dense=True, content_padding=5,
-            read_only=True, bgcolor=ft.Colors.WHITE,
-            color=ft.Colors.BLACK, border_color=ft.Colors.GREY_500
+        self.is_form_expanded = False
+        self.selected_car = None
+
+        # --- Botón compacto inicial ---
+        self.expand_button = ft.ElevatedButton(
+            "Formulario",
+            icon=ft.Icons.KEYBOARD_ARROW_DOWN,
+            bgcolor=ft.Colors.BLUE_600,
+            color=ft.Colors.WHITE,
+            on_click=self._toggle_form,
         )
-        self.car_input = ft.TextField(
-            label="Auto", dense=True, content_padding=5,
-            read_only=True, bgcolor=ft.Colors.WHITE,
-            color=ft.Colors.BLACK, border_color=ft.Colors.GREY_500
-        )
-        
-        self.rental_days_field = ft.TextField(
-            label="Días de contrato",
-            dense=True,
-            content_padding=5,
-            input_filter=ft.NumbersOnlyInputFilter(),
-            hint_text="Ej: 5"
-        )
-        self.extension_field = ft.TextField(
-            label="Prórroga (días)",
-            dense=True,
-            content_padding=5,
-            input_filter=ft.NumbersOnlyInputFilter(),
-            hint_text="0 si no aplica"
-        )
+
+        # --- contenido expandido ---
+        self.name_field = ft.TextField(label="Nombre", dense=True)
+        self.passport_field = ft.TextField(label="Pasaporte", dense=True)
+        self.country_input = ft.TextField(label="País", dense=True, read_only=True)
+        self.car_input = ft.TextField(label="Auto", dense=True, read_only=True)
+        self.rental_days_field = ft.TextField(label="Días de contrato", dense=True,
+                                              input_filter=ft.NumbersOnlyInputFilter())
+        self.extension_field = ft.TextField(label="Prórroga (días)", dense=True,
+                                            input_filter=ft.NumbersOnlyInputFilter())
         self.payment_dropdown = ft.Dropdown(
             label="Forma de pago",
-            dense=True,
-            options=[
-                ft.dropdown.Option("efectivo"),
-                ft.dropdown.Option("cheque"),
-                ft.dropdown.Option("tarjeta de crédito")
-            ],
-            value="efectivo"
+            options=[ft.dropdown.Option("efectivo"),
+                     ft.dropdown.Option("cheque"),
+                     ft.dropdown.Option("tarjeta de crédito")],
+            value="efectivo",
         )
-        
-        self.driver_switch = ft.Switch(label="Con conductor", value=False)
-
-        self.add_btn = ft.Container(
-            content=ft.ElevatedButton(
-                "Add",
-                on_click=lambda e: self.formulary_set(e),
-                height=36,
-                width=100
-            ),
-            alignment=ft.alignment.center,
-            padding=ft.padding.only(top=8)
-        )
-
-        self.toggle_form_btn = ft.TextButton("▲ Ocultar formulario", on_click=self._toggle_form)
-
-        def on_car_select(car):
-            found_car = None
-            for c in self.info_manager.cars:
-                if c.plate == car.plate:
-                    found_car = c
-                    break
-            if found_car and found_car.status != "disponible":
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text(f"❌ El auto {found_car} no está disponible ({found_car.status})"),
-                    bgcolor=ft.Colors.RED_200
-                )
-                self.page.snack_bar.open = True
-                self.page.update()
-                return
-            self.selected_car = found_car
-
-        self.country_panel = CountryPanel(input_field=self.country_input)
-        self.car_panel = CarPanel(items=self.info_manager.cars, input_field=self.car_input, on_select=on_car_select)
-        self.select_country_btn = ft.TextButton("Seleccionar país", on_click=lambda e: self._toggle_country_panel(e))
-        self.select_car_btn = ft.TextButton("Seleccionar auto", on_click=lambda e: self._toggle_car_panel(e))
+        self.driver_switch = ft.Switch(label="Con conductor")
+        self.add_btn = ft.ElevatedButton("Agregar contrato", icon=ft.Icons.ADD,
+                                         on_click=self.formulary_set)
 
         self.form_column = ft.Column(
             controls=[
-                self.toggle_form_btn,
+                ft.Row([
+                    ft.Text("Formulario de contrato", weight="bold"),
+                    ft.IconButton(ft.Icons.CLOSE, tooltip="Colapsar",
+                                  on_click=self._toggle_form)
+                ]),
                 self.name_field,
                 self.passport_field,
                 self.country_input,
@@ -591,76 +516,32 @@ class Formulary(ft.Container):
                 self.extension_field,
                 self.payment_dropdown,
                 self.driver_switch,
-                self.select_country_btn,
-                self.country_panel,
-                self.select_car_btn,
-                self.car_panel,
-                self.add_btn
+                self.add_btn,
             ],
-            spacing=12,
+            spacing=10,
             scroll=ft.ScrollMode.AUTO,
-            tight=True
         )
 
-        self.country_panel.visible = False
-        self.car_panel.visible = False
-        #herencia ( •̀ ω •́ )✧
+        # inicial: solo botón
         super().__init__(
-            content=self.form_column,
-            padding=14,
-            border=ft.border.all(1, ft.Colors.GREY_400),
-            border_radius=12,
-            height=800,
-            width=280,
-            expand=False
+            content=self.expand_button,
+            width=120,
+            height=40,
+            border_radius=8,
         )
 
-    def _toggle_form(self, e):
+    def _toggle_form(self, e=None):
         self.is_form_expanded = not self.is_form_expanded
         if self.is_form_expanded:
-            self.width = 280
-            self.toggle_form_btn.text = "▲ Ocultar formulario"
-            for control in self.form_column.controls[1:]:
-                control.visible = True
+            self.content = self.form_column
+            self.width = 360
+            self.height = 600
+            self.padding = 16
         else:
-            self.width = 150
-            self.toggle_form_btn.text = "▼ Mostrar formulario"
-            for control in self.form_column.controls[1:]:
-                control.visible = False
-        self.update()
-
-    def _toggle_country_panel(self, e):
-        self.is_country_panel_open = not self.is_country_panel_open
-        self.country_panel.visible = self.is_country_panel_open
-
-        if self.is_country_panel_open:
-            self.width = 460
-            self.select_country_btn.text = "▲ Ocultar países"
-            self.country_panel.search_field.focus()
-        else:
-            self.width = 280 if self.is_form_expanded else 150
-            self.select_country_btn.text = "Seleccionar país"
-            self.country_panel.search_field.value = ""
-            self.country_panel._filter_and_update("")
-            if self.page:
-                self.country_panel.search_field.update()
-        self.update()
-
-    def _toggle_car_panel(self, e):
-        self.is_car_panel_open = not self.is_car_panel_open
-        self.car_panel.visible = self.is_car_panel_open
-
-        if self.is_car_panel_open:
-            self.width = 460
-            self.select_car_btn.text = "▲ Ocultar autos"
-            self.car_panel.search_field.focus()
-        else:
-            self.width = 280 if self.is_form_expanded else 150
-            self.select_car_btn.text = "Seleccionar auto"
-            self.car_panel.search_field.value = ""
-            self.car_panel._filter_and_update("")
-            if self.page:
-                self.car_panel.search_field.update()
+            self.content = self.expand_button
+            self.width = 120
+            self.height = 40
+            self.padding = 0
         self.update()
 
     def formulary_set(self, e):
@@ -670,35 +551,23 @@ class Formulary(ft.Container):
         car_obj = self.selected_car
         with_driver = self.driver_switch.value
 
-        #por si se deja algun campo vacio 
         if not name or not passport or not country:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("❌ Faltan campos obligatorios"),
-                bgcolor=ft.Colors.RED_200
-            )
+            self.page.snack_bar = ft.SnackBar(ft.Text("❌ Faltan campos obligatorios"), bgcolor=ft.Colors.RED_200)
             self.page.snack_bar.open = True
             self.page.update()
             return
 
         if not car_obj:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("❌ Debes seleccionar un auto"),
-                bgcolor=ft.Colors.RED_200
-            )
+            self.page.snack_bar = ft.SnackBar(ft.Text("❌ Debes seleccionar un auto"), bgcolor=ft.Colors.RED_200)
             self.page.snack_bar.open = True
             self.page.update()
             return
 
         if car_obj.status != "disponible":
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("❌ Auto no disponible para alquilar"),
-                bgcolor=ft.Colors.RED_200
-            )
+            self.page.snack_bar = ft.SnackBar(ft.Text("❌ Auto no disponible para alquilar"), bgcolor=ft.Colors.RED_200)
             self.page.snack_bar.open = True
             self.page.update()
             return
-
-        car_obj.status = "alquilado"
 
         rental_days_str = self.rental_days_field.value or "1"
         extension_str = self.extension_field.value or "0"
@@ -721,8 +590,8 @@ class Formulary(ft.Container):
         start_date = date.today()
         end_date = start_date + timedelta(days=rental_days - 1)
 
-       #instanciamos para poder ingresar los datos 
         tourist = Tourist(name, passport, country)
+
         try:
             contract = RentalContract(
                 tourist=tourist,
@@ -731,39 +600,43 @@ class Formulary(ft.Container):
                 end_date=end_date,
                 extension_days=extension_days,
                 with_driver=with_driver,
-                payment_method=payment_method
+                payment_method=payment_method,
             )
-            #testeo de lo contratos para saver si se estan anadiendo todos
-            contract.print_all_attributes()
 
             self.info_manager.incert_contrats(contract)
-            print_all_contracts()
-        
+            car_obj.status = "alquilado"
+
             self.info_table.add_tourist(name=name, passport=passport, country=country)
             self.contracts_table.add_contract(contract)
 
-            # ✅ Actualizar reportes
-            self.users_by_country_table.populate(self.contracts_list)
-            self.summary_by_country_table.populate(self.contracts_list)
-            self.cars_list_table.populate(self.cars_list)
+            self.users_by_country_table.populate(self.info_manager.contracts)
+            self.summary_by_country_table.populate(self.info_manager.contracts)
+            self.cars_list_table.populate(self.info_manager.cars)
             self.page.update()
 
+            # limpiar campos
             self.name_field.value = ""
             self.passport_field.value = ""
             self.country_input.value = ""
+            self.car_input.value = ""
             self.rental_days_field.value = ""
             self.extension_field.value = ""
             self.selected_car = None
-            for field in [self.name_field, self.passport_field, self.country_input,
-                         self.rental_days_field, self.extension_field]:
+            for field in [
+                self.name_field,
+                self.passport_field,
+                self.country_input,
+                self.car_input,
+                self.rental_days_field,
+                self.extension_field,
+            ]:
                 field.update()
 
-        except Exception as ex:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"❌ Error: {str(ex)}"),
-                bgcolor=ft.Colors.RED_200
-            )
+            self.page.snack_bar = ft.SnackBar(ft.Text("✅ Contrato agregado"), bgcolor=ft.Colors.GREEN_200)
             self.page.snack_bar.open = True
             self.page.update()
 
-
+        except Exception as ex:
+            self.page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error: {str(ex)}"), bgcolor=ft.Colors.RED_200)
+            self.page.snack_bar.open = True
+            self.page.update()

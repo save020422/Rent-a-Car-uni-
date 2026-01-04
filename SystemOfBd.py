@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from datetime import date
+from datetime import date, timedelta
 from dataAbstration import Tourist, Car, RentalContract
 
 
@@ -13,6 +13,8 @@ class SystemOfDb:
         self._create_tables()
         self.countrys_incert()
         self.cars_incrt()
+        self.tourists_incrt()
+        self.contracts_incrt()
 
     def _create_tables(self):
         connection = sqlite3.connect(self.db_path)
@@ -247,7 +249,10 @@ class SystemOfDb:
                     "Perú", "España", "Francia", "Italia", "Alemania",
                     "Japón", "Corea del Sur", "Estados Unidos", "Canadá", "Australia",
                     "India", "China", "Rusia", "Sudáfrica", "Egipto", "Portugal", "Suiza",
-                    "Bélgica", "Holanda", "Noruega", "Suecia", "Dinamarca", "Polonia", "Turquía"
+                    "Bélgica", "Holanda", "Noruega", "Suecia", "Dinamarca", "Polonia", "Turquía",
+                    # extra
+                    "Grecia", "Irlanda", "Finlandia", "Hungría", "Austria", "Nueva Zelanda",
+                    "Croacia", "Serbia", "Eslovenia", "Andorra", "Marruecos", "Túnez"
                 ]
                 cursor.executemany("INSERT INTO Country (name) VALUES (?)", [(c,) for c in countries])
                 connection.commit()
@@ -270,7 +275,18 @@ class SystemOfDb:
                     ("PQR901", "Audi", "A4", "Rojo", "disponible", 0.0),
                     ("STU234", "Hyundai", "Elantra", "Azul", "disponible", 0.0),
                     ("VWX567", "Nissan", "Sentra", "Blanco", "disponible", 0.0),
-                    ("YZA890", "Chevrolet", "Cruze", "Gris", "disponible", 0.0)
+                    ("YZA890", "Chevrolet", "Cruze", "Gris", "disponible", 0.0),
+                    # extra
+                    ("AAA001", "Kia", "Rio", "Blanco", "disponible", 0.0),
+                    ("BBB002", "Renault", "Clio", "Azul", "disponible", 0.0),
+                    ("CCC003", "Peugeot", "208", "Rojo", "disponible", 0.0),
+                    ("DDD004", "Mazda", "3", "Negro", "disponible", 0.0),
+                    ("EEE005", "Citroën", "C3", "Gris", "disponible", 0.0),
+                    ("FFF006", "Subaru", "Impreza", "Azul", "disponible", 0.0),
+                    ("GGG007", "Skoda", "Octavia", "Verde", "disponible", 0.0),
+                    ("HHH008", "Seat", "Leon", "Blanco", "disponible", 0.0),
+                    ("III009", "Opel", "Astra", "Negro", "disponible", 0.0),
+                    ("JJJ010", "Volvo", "S60", "Gris", "disponible", 0.0)
                 ]
                 cursor.executemany("""
                     INSERT INTO Car (plate, brand, model, color, status, total_km)
@@ -279,3 +295,86 @@ class SystemOfDb:
                 connection.commit()
         finally:
             connection.close()
+
+    def tourists_incrt(self):
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM Tourist")
+            if cursor.fetchone()[0] == 0:
+                tourists = [
+                    ("Ana López", "ES123456", "España"),
+                    ("Carlos Mendoza", "MX789012", "México"),
+                    ("Sophie Dubois", "FR345678", "Francia"),
+                    ("Hiroshi Tanaka", "JP901234", "Japón"),
+                    ("Liam O'Connor", "IE567890", "Irlanda"),
+                    ("Amina Nkosi", "ZA234567", "Sudáfrica"),
+                    ("Raj Patel", "IN890123", "India"),
+                    ("Emma Johansson", "SE456789", "Suecia"),
+                    ("Luca Rossi", "IT012345", "Italia"),
+                    ("Yara Silva", "BR678901", "Brasil"),
+                    # extra
+                    ("Emily Clark", "US000333", "Estados Unidos"),
+                    ("Nikolai Ivanov", "RU000444", "Rusia"),
+                    ("Fatima Hassan", "EG000555", "Egipto"),
+                    ("Chen Wei", "CN000666", "China"),
+                    ("Aarav Singh", "IN000777", "India"),
+                    ("Sara Lund", "SE000999", "Suecia"),
+                    ("Jonas Müller", "DE001010", "Alemania"),
+                ]
+                # asegurar país y luego insertar turista
+                for name, passport, country in tourists:
+                    try:
+                        cursor.execute("INSERT INTO Country (name) VALUES (?)", (country,))
+                    except sqlite3.IntegrityError:
+                        pass
+                    cursor.execute("SELECT id FROM Country WHERE name=?", (country,))
+                    country_id = cursor.fetchone()[0]
+                    try:
+                        cursor.execute("""
+                            INSERT INTO Tourist (name, passport_number, country_id, times_used_cars, total_rental_value)
+                            VALUES (?, ?, ?, ?, ?)
+                        """, (name, passport, country_id, 0, 0.0))
+                    except sqlite3.IntegrityError:
+                        pass
+                connection.commit()
+        finally:
+            connection.close()
+
+    def contracts_incrt(self):
+        # crea contratos de prueba usando turistas y autos disponibles
+        tourists = self.get_all_tourists()
+        cars = [c for c in self.get_all_cars() if c.status == "disponible"]
+        if not tourists or not cars:
+            return
+
+        today = date.today()
+        payment_methods = ["efectivo", "cheque", "tarjeta de crédito"]
+
+        # limitar a la cantidad posible
+        count = min(12, len(tourists), len(cars))
+        for i in range(count):
+            t = tourists[i % len(tourists)]
+            c = cars[i % len(cars)]
+            start = today - timedelta(days=7 + (i % 5))
+            end = start + timedelta(days=3 + (i % 4))
+            extension_days = 1 if i % 4 == 0 else 0
+            with_driver = (i % 2 == 0)
+            payment_method = payment_methods[i % len(payment_methods)]
+
+            contract = RentalContract(
+                tourist=t,
+                car=c,
+                start_date=start,
+                end_date=end,
+                extension_days=extension_days,
+                with_driver=with_driver,
+                payment_method=payment_method
+            )
+
+            # insertar contrato; si el auto no está disponible, se salta
+            try:
+                self.insert_contract(contract)
+            except Exception as e:
+                print(f"❌ No se pudo insertar contrato de prueba: {e}")
+                continue
