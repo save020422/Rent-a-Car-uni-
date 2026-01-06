@@ -475,7 +475,7 @@ class Formulary(ft.Container):
         self.expand_button = ft.ElevatedButton(
             "Formulario",
             icon=ft.Icons.KEYBOARD_ARROW_DOWN,
-            bgcolor=ft.Colors.BLUE_600,
+            bgcolor=ft.Colors.BLACK,
             color=ft.Colors.WHITE,
             on_click=self._toggle_form,
         )
@@ -495,8 +495,10 @@ class Formulary(ft.Container):
         self.add_btn = ft.ElevatedButton("Agregar contrato", icon=ft.Icons.ADD, on_click=self.formulary_set)
 
         def on_car_select(car):
+            print("Busquemos auto")
             found_car = next((c for c in self.info_manager.cars if c.plate == car.plate), None)
             if found_car and found_car.status != "disponible":
+                print("No esta disponible")
                 self.page.snack_bar = ft.SnackBar(
                     ft.Text(f"❌ El auto {found_car.plate} no está disponible ({found_car.status})"),
                     bgcolor=ft.Colors.RED_200,
@@ -504,6 +506,7 @@ class Formulary(ft.Container):
                 self.page.snack_bar.open = True
                 self.page.update()
                 return
+            print("Yolo")
             self.selected_car = found_car
             self.car_input.value = f"{found_car.plate} • {found_car.brand} {found_car.model}"
             self.car_input.update()
@@ -588,23 +591,28 @@ class Formulary(ft.Container):
         self.update()
 
     def formulary_set(self, e):
-        name = self.name_field.value or ""
-        passport = self.passport_field.value or ""
-        country = self.country_input.value or ""
+        print("formulary_set: inicio")
+        name = (self.name_field.value or "").strip()
+        passport = (self.passport_field.value or "").strip()
+        country = (self.country_input.value or "").strip()
         car_obj = self.selected_car
-        with_driver = self.driver_switch.value
+        with_driver = bool(self.driver_switch.value)
 
+        # Validaciones básicas
         if not name or not passport or not country:
+            print("formulary_set: faltan campos obligatorios (nombre/pasaporte/pais)")
             self.page.snack_bar = ft.SnackBar(ft.Text("❌ Faltan campos obligatorios"), bgcolor=ft.Colors.RED_200)
             self.page.snack_bar.open = True
             self.page.update()
             return
         if not car_obj:
+            print("formulary_set: no hay auto seleccionado")
             self.page.snack_bar = ft.SnackBar(ft.Text("❌ Debes seleccionar un auto"), bgcolor=ft.Colors.RED_200)
             self.page.snack_bar.open = True
             self.page.update()
             return
         if car_obj.status != "disponible":
+            print(f"formulary_set: auto no disponible (status={car_obj.status})")
             self.page.snack_bar = ft.SnackBar(ft.Text("❌ Auto no disponible para alquilar"), bgcolor=ft.Colors.RED_200)
             self.page.snack_bar.open = True
             self.page.update()
@@ -614,23 +622,31 @@ class Formulary(ft.Container):
         extension_str = self.extension_field.value or "0"
         payment_method = self.payment_dropdown.value
 
+        # Parseo numérico con defaults
         try:
             rental_days = int(rental_days_str)
             if rental_days <= 0:
+                print("formulary_set: rental_days <= 0, ajustando a 1")
                 rental_days = 1
         except ValueError:
+            print("formulary_set: rental_days inválido, ajustando a 1")
             rental_days = 1
+
         try:
             extension_days = int(extension_str)
             if extension_days < 0:
+                print("formulary_set: extension_days < 0, ajustando a 0")
                 extension_days = 0
         except ValueError:
+            print("formulary_set: extension_days inválido, ajustando a 0")
             extension_days = 0
 
         start_date = date.today()
         end_date = start_date + timedelta(days=rental_days - 1)
         tourist = Tourist(name, passport, country)
 
+        # Bloque 1: crear contrato
+        print("formulary_set: creando contrato...")
         try:
             contract = RentalContract(
                 tourist=tourist,
@@ -641,22 +657,65 @@ class Formulary(ft.Container):
                 with_driver=with_driver,
                 payment_method=payment_method,
             )
+            print("formulary_set: contrato creado OK")
+        except Exception as ex:
+            print(f"formulary_set: ERROR al crear contrato -> {ex}")
+            self.page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error creando contrato: {ex}"), bgcolor=ft.Colors.RED_200)
+            self.page.snack_bar.open = True
+            self.page.update()
+            return
 
+        # Bloque 2: persistencia y estados
+        print("formulary_set: insertando en manager y actualizando estado del auto...")
+        try:
             self.info_manager.incert_contrats(contract)
+            try:
+                self.info_manager.incert_tourist(tourist=tourist)
+            except Exception as ex_tour:
+                print(f"formulary_set: WARN al insertar turista en BD -> {ex_tour}")
             car_obj.status = "alquilado"
+            print("formulary_set: manager y estado OK")
+        except Exception as ex:
+            print(f"formulary_set: ERROR en persistencia/estado -> {ex}")
+            self.page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error guardando datos: {ex}"), bgcolor=ft.Colors.RED_200)
+            self.page.snack_bar.open = True
+            self.page.update()
+            return
 
-            self.info_table.original_data.append(tourist)
-            self.info_table.populate(self.info_table.original_data)
+        # Bloque 3: actualizar vistas
+        print("formulary_set: actualizando vistas...")
+        try:
+            # Si tienes helpers add_tourist/add_contract, se mantienen:
+            try:
+                self.info_table.add_tourist(name=name, passport=passport, country=country)
+            except Exception as ex_add_t:
+                print(f"formulary_set: WARN add_tourist -> {ex_add_t}; usando populate")
+                self.info_table.original_data.append(tourist)
+                self.info_table.populate(self.info_table.original_data)
 
-            self.contracts_table.original_data.append(contract)
-            self.contracts_table.populate(self.contracts_table.original_data)
+            try:
+                self.contracts_table.add_contract(contract)
+            except Exception as ex_add_c:
+                print(f"formulary_set: WARN add_contract -> {ex_add_c}; usando populate")
+                self.contracts_table.original_data.append(contract)
+                self.contracts_table.populate(self.contracts_table.original_data)
 
             self.users_by_country_table.populate(self.info_manager.contracts)
             self.summary_by_country_table.populate(self.info_manager.contracts)
-            self.cars_list_table.populate(self.cars_list_table.original_data)
+            self.cars_list_table.populate(self.info_manager.cars)
 
             self.page.update()
+            print("formulary_set: vistas OK")
+        except Exception as ex:
+            print(f"formulary_set: ERROR actualizando vistas -> {ex}")
+            self.page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error actualizando vistas: {ex}"), bgcolor=ft.Colors.RED_200)
+            self.page.snack_bar.open = True
+            self.page.update()
+            return
 
+        # Bloque 4: limpieza UI
+        print("formulary_set: limpiando campos...")
+        try:
             self.name_field.value = ""
             self.passport_field.value = ""
             self.country_input.value = ""
@@ -673,75 +732,12 @@ class Formulary(ft.Container):
                 self.extension_field,
             ]:
                 field.update()
-
-            self.page.snack_bar = ft.SnackBar(ft.Text("✅ Contrato agregado"), bgcolor=ft.Colors.GREEN_200)
-            self.page.snack_bar.open = True
-            self.page.update()
-
+            print("formulary_set: limpieza OK")
         except Exception as ex:
-            self.page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error: {str(ex)}"), bgcolor=ft.Colors.RED_200)
-            self.page.snack_bar.open = True
-            self.page.update()
+            print(f"formulary_set: WARN limpiando campos -> {ex}")
 
-
-# ============================
-# Main
-# ============================
-
-def main(page: ft.Page):
-    page.title = "Rent a Car - Control de Alquiler"
-    page.padding = 16
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.bgcolor = ft.Colors.GREY_100
-
-    page.appbar = ft.AppBar(
-        title=ft.Text("🚘 Rent a Car", size=20, weight="bold"),
-        bgcolor=ft.Colors.BLUE_700,
-        color=ft.Colors.WHITE,
-        center_title=True,
-        elevation=4,
-    )
-
-    info_table = InfoTable(tourists_list=info_manager.tourist)
-    contracts_table = ContractsTable(contracts_list=info_manager.contracts)
-    brand_model_table = BrandModelReportTable(contracts_list=info_manager.contracts, cars_list=info_manager.cars)
-    users_by_country_table = UsersByCountryTable(contracts_list=info_manager.contracts)
-    cars_list_table = CarsListTable(cars_list=info_manager.cars)
-    summary_by_country_table = SummaryByCountryTable(contracts_list=info_manager.contracts)
-
-    tabs = ft.Tabs(
-        selected_index=0,
-        animation_duration=300,
-        tabs=[
-            ft.Tab(text="Turistas", content=info_table),
-            ft.Tab(text="Contratos", content=contracts_table),
-            ft.Tab(text="Marca/Modelo", content=brand_model_table),
-            ft.Tab(text="Usuarios x País", content=users_by_country_table),
-            ft.Tab(text="Lista de Autos", content=cars_list_table),
-            ft.Tab(text="Resumen x País", content=summary_by_country_table),
-        ],
-        expand=True,
-    )
-
-    form = Formulary(
-        page=page,
-        info_table=info_table,
-        contracts_table=contracts_table,
-        users_by_country_table=users_by_country_table,
-        summary_by_country_table=summary_by_country_table,
-        cars_list_table=cars_list_table,
-        info_manager=info_manager,
-    )
-
-    layout = ft.Row(
-        controls=[form, ft.Column(controls=[tabs], expand=True, scroll=ft.ScrollMode.AUTO)],
-        spacing=16,
-        vertical_alignment=ft.CrossAxisAlignment.START,
-        expand=True,
-    )
-
-    page.add(layout)
-
-
-if __name__ == "__main__":
-    ft.app(target=main)
+        # Feedback final
+        self.page.snack_bar = ft.SnackBar(ft.Text("✅ Contrato agregado"), bgcolor=ft.Colors.GREEN_200)
+        self.page.snack_bar.open = True
+        self.page.update()
+        print("formulary_set: fin OK")

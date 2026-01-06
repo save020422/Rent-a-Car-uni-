@@ -15,12 +15,7 @@ def main(page: ft.Page):
         elevation=0
     )
 
-    # ✅ Crear contratos de ejemplo si no hay ninguno
-    #if not contracts:
-        #sample_contracts = create_sample_contracts(SAMPLE_TOURISTS, SAMPLE_CARS, num=6)
-       # contracts.extend(sample_contracts)
-       # print("✅ Contratos de ejemplo creados para testing")
-        #print_all_contracts()
+    
 
     info_table = InfoTable(tourists_list=info_manager.tourist)
     contracts_table = ContractsTable(contracts_list=info_manager.contracts)
@@ -56,7 +51,7 @@ def main(page: ft.Page):
     contracts_table=contracts_table,
     users_by_country_table=users_by_country_table,
     summary_by_country_table=summary_by_country_table,
-    cars_list_table=cars_list_table,   # ← este faltaba
+    cars_list_table=cars_list_table,  
     info_manager=info_manager
     )
 

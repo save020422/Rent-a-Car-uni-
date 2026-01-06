@@ -13,8 +13,8 @@ class SystemOfDb:
         self._create_tables()
         self.countrys_incert()
         self.cars_incrt()
-        self.tourists_incrt()
-        self.contracts_incrt()
+        #self.tourists_incrt()
+        #self.contracts_incrt()
 
     def _create_tables(self):
         connection = sqlite3.connect(self.db_path)
@@ -286,7 +286,8 @@ class SystemOfDb:
                     ("GGG007", "Skoda", "Octavia", "Verde", "disponible", 0.0),
                     ("HHH008", "Seat", "Leon", "Blanco", "disponible", 0.0),
                     ("III009", "Opel", "Astra", "Negro", "disponible", 0.0),
-                    ("JJJ010", "Volvo", "S60", "Gris", "disponible", 0.0)
+                    ("JJJ010", "Volvo", "S60", "Gris", "disponible", 0.0),
+                    ("JJJ020", "Supra", "S460", "verde", "disponible", 0.0)
                 ]
                 cursor.executemany("""
                     INSERT INTO Car (plate, brand, model, color, status, total_km)
